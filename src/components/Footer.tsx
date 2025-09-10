@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import { Crown, Facebook, Instagram, Twitter, Mail, Phone, MapPin, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const Footer: React.FC = () => {
@@ -175,13 +175,29 @@ const Footer: React.FC = () => {
             <p className="text-gray-400 mb-6">
               Suscríbete para recibir ofertas exclusivas y novedades
             </p>
-            <div className="flex max-w-md mx-auto">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const email = formData.get('email') as string;
+                if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                  alert('¡Gracias por suscribirte!');
+                  (e.target as HTMLFormElement).reset();
+                } else {
+                  alert('Por favor ingresa un email válido');
+                }
+              }}
+              className="flex max-w-md mx-auto"
+            >
               <input
+                name="email"
                 type="email"
                 placeholder="Tu email"
+                required
                 className="flex-1 px-4 py-3 rounded-l-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <motion.button
+                type="submit"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="px-6 py-3 rounded-r-lg text-white font-semibold"
@@ -189,7 +205,7 @@ const Footer: React.FC = () => {
               >
                 Suscribirse
               </motion.button>
-            </div>
+            </form>
           </div>
         </motion.div>
 
@@ -198,12 +214,25 @@ const Footer: React.FC = () => {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 1 }}
-          className="border-t border-gray-800 pt-8 text-center"
+          className="border-t border-gray-800 pt-8"
         >
-          <p className="text-gray-400">
-            © 2024 Cleopatra Regalos. Todos los derechos reservados. 
-            Hecho con ❤️ en Madrid, Cundinamarca.
-          </p>
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <p className="text-gray-400 mb-4 md:mb-0">
+              © 2024 Cleopatra Regalos. Todos los derechos reservados. 
+              Hecho con ❤️ en Madrid, Cundinamarca.
+            </p>
+            
+            {/* Admin Button */}
+            <motion.button
+              onClick={() => window.location.href = '/admin'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-all duration-200 border border-gray-700 hover:border-gray-600"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="text-sm font-medium">Admin</span>
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     </footer>

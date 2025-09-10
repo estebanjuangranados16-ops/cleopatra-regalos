@@ -26,7 +26,7 @@ const Favorites: React.FC<FavoritesProps> = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-[9999]"
+            className="fixed inset-0 bg-black/50 z-[10000] modal-overlay"
             onClick={onClose}
           />
           <motion.div
@@ -34,7 +34,7 @@ const Favorites: React.FC<FavoritesProps> = ({ isOpen, onClose }) => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed right-0 top-0 h-screen w-96 bg-white shadow-xl z-[9999] flex flex-col"
+            className="fixed right-0 top-0 h-screen w-96 bg-white shadow-xl z-[10001] flex flex-col modal-content"
           >
             <div className="flex items-center justify-between p-6 border-b">
               <div className="flex items-center space-x-2">
@@ -48,7 +48,7 @@ const Favorites: React.FC<FavoritesProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
               {favorites.length === 0 ? (
                 <div className="text-center py-12">
                   <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
@@ -70,7 +70,7 @@ const Favorites: React.FC<FavoritesProps> = ({ isOpen, onClose }) => {
                     >
                       <div className="flex space-x-4">
                         <img
-                          src={item.images[0]}
+                          src={item.image}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded-lg"
                         />

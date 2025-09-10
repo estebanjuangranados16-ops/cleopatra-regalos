@@ -1,19 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'customer';
-  avatar?: string;
-}
+import { User } from '../types/user';
+import { authService } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
-  logout: () => void;
+  isLoading: boolean;
   isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -29,96 +27,66 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-
-  // Mock users database
-  const mockUsers = [
-    {
-      id: '1',
-      email: 'admin@cleopatra.com',
-      password: 'admin123',
-      name: 'Administrador',
-      role: 'admin' as const
-    },
-    {
-      id: '2',
-      email: 'cliente@test.com',
-      password: '123456',
-      name: 'Cliente Test',
-      role: 'customer' as const
-    }
-  ];
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('cleopatra-user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
     }
+    setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const userData: User = {
-        id: foundUser.id,
-        email: foundUser.email,
-        name: foundUser.name,
-        role: foundUser.role
-      };
-      
-      setUser(userData);
-      localStorage.setItem('cleopatra-user', JSON.stringify(userData));
-      return true;
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const loggedUser = await authService.loginWithEmail(email, password);
+      setUser(loggedUser);
+    } finally {
+      setIsLoading(false);
     }
-    
-    return false;
   };
 
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check if user already exists
-    const existingUser = mockUsers.find(u => u.email === email);
-    if (existingUser) {
-      return false;
+  const register = async (email: string, password: string, name: string) => {
+    setIsLoading(true);
+    try {
+      const newUser = await authService.registerWithEmail(email, password, name);
+      setUser(newUser);
+    } finally {
+      setIsLoading(false);
     }
-    
-    const newUser: User = {
-      id: Date.now().toString(),
-      email,
-      name,
-      role: 'customer'
-    };
-    
-    // Add to mock database
-    mockUsers.push({
-      id: newUser.id,
-      email,
-      password,
-      name,
-      role: 'customer'
-    });
-    
-    setUser(newUser);
-    localStorage.setItem('cleopatra-user', JSON.stringify(newUser));
-    return true;
   };
 
-  const logout = () => {
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      const googleUser = await authService.loginWithGoogle();
+      setUser(googleUser);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
-    localStorage.removeItem('cleopatra-user');
+  };
+
+  const updateProfile = async (updates: Partial<User>) => {
+    if (!user) return;
+    const updatedUser = await authService.updateProfile(updates);
+    setUser(updatedUser);
   };
 
   const value = {
     user,
+    isLoading,
+    isAuthenticated: !!user,
     login,
     register,
+    loginWithGoogle,
     logout,
-    isAuthenticated: !!user,
+    updateProfile,
     isAdmin: user?.role === 'admin'
   };
 

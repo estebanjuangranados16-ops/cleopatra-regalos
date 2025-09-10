@@ -15,6 +15,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [shouldLoad] = useState(true);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -37,12 +38,13 @@ const OptimizedImage: React.FC<OptimizedImageProps> = memo(({
       <img
         src={hasError ? placeholder : src}
         alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
+        className={`w-full h-full object-cover transition-opacity duration-500 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         } ${className}`}
         onLoad={handleLoad}
         onError={handleError}
         loading="lazy"
+        decoding="async"
       />
     </div>
   );

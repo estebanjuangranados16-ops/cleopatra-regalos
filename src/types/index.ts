@@ -2,11 +2,12 @@ export type Theme = 'gifts' | 'tech';
 export type Category = 'regalos' | 'tecnologia';
 
 export interface Product {
-  id: string;
+  id: string | number;
   name: string;
-  price: number;
-  images: string[];
-  category: Category;
+  price: string;
+  image: string;
+  images?: string[];
+  category: 'gifts' | 'tech';
   description: string;
   createdAt?: string;
 }

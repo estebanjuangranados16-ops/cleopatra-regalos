@@ -4,6 +4,7 @@ import { X, User, Mail, Shield, ShoppingBag, Heart, Settings, LogOut } from 'luc
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStore } from '../store/useStore';
+import OrderManagement from './OrderManagement';
 
 interface UserProfileProps {
   isOpen: boolean;
@@ -15,6 +16,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
   const { user, logout, isAdmin } = useAuth();
   const { cart, favorites, addToast } = useStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'settings'>('profile');
+  const [showOrderManagement, setShowOrderManagement] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleLogout = () => {
     logout();
@@ -42,31 +56,32 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-[9999]"
+            className="modal-backdrop bg-black/50 modal-overlay"
             onClick={onClose}
           />
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="fixed inset-4 bg-white rounded-2xl z-[9999] flex flex-col max-w-4xl mx-auto"
+            className="modal-container"
           >
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-2xl font-bold" style={{ color: colors.secondary }}>
+            <div className="bg-white rounded-lg sm:rounded-2xl w-full max-w-sm sm:max-w-4xl max-h-[95vh] sm:max-h-[85vh] overflow-hidden flex flex-col modal-content shadow-2xl">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-2xl font-bold" style={{ color: colors.secondary }}>
                 Mi Perfil
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
-                <X className="w-6 h-6" />
+              <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-full">
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-hidden flex">
+            <div className="flex-1 overflow-hidden flex flex-col sm:flex-row">
               {/* Sidebar */}
-              <div className="w-64 bg-gray-50 p-6">
+              <div className="w-full sm:w-64 bg-gray-50 p-3 sm:p-6 flex-shrink-0 scrollbar-thin overflow-y-auto">
                 {/* User Info */}
-                <div className="text-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-3">
-                    {user.name.charAt(0)}
+                <div className="text-center mb-4 sm:mb-6">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl sm:text-2xl mx-auto mb-2 sm:mb-3">
+                    {user.name?.charAt(0) || 'U'}
                   </div>
                   <h3 className="font-semibold" style={{ color: colors.secondary }}>
                     {user.name}
@@ -99,34 +114,38 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
 
                 {/* Admin Panel Access */}
                 {isAdmin && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      // You can add admin panel opening logic here
+                      onClose();
                       addToast({
                         type: 'info',
                         title: 'Panel de Admin',
-                        message: 'Accede desde la sección de productos'
+                        message: 'Busca el botón "Agregar Producto" en la barra de navegación'
                       });
                     }}
-                    className="w-full text-left px-4 py-3 rounded-lg font-medium text-blue-600 hover:bg-blue-50 flex items-center space-x-3 mb-2"
+                    className="w-full text-left px-4 py-3 rounded-lg font-medium text-blue-600 hover:bg-blue-50 flex items-center space-x-3 mb-2 transition-colors"
                   >
                     <Settings className="w-4 h-4" />
                     <span>Panel de Admin</span>
-                  </button>
+                  </motion.button>
                 )}
                 
                 {/* Logout */}
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-3 rounded-lg font-medium text-red-600 hover:bg-red-50 flex items-center space-x-3"
+                  className="w-full text-left px-4 py-3 rounded-lg font-medium text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Cerrar Sesión</span>
-                </button>
+                </motion.button>
               </div>
 
               {/* Content */}
-              <div className="flex-1 p-6 overflow-y-auto">
+              <div className="flex-1 p-3 sm:p-6 overflow-y-auto scrollbar-thin">
                 {activeTab === 'profile' && (
                   <div>
                     <h3 className="text-xl font-semibold mb-6">Información del Perfil</h3>
@@ -161,28 +180,60 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                       <div className="space-y-6">
                         <div className="bg-blue-50 p-6 rounded-lg">
                           <h4 className="font-semibold mb-4" style={{ color: colors.secondary }}>
-                            Estadísticas
+                            {isAdmin ? 'Panel de Control' : 'Estadísticas'}
                           </h4>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center space-x-2">
-                                <ShoppingBag className="w-4 h-4" />
-                                <span>Productos en carrito</span>
-                              </span>
-                              <span className="font-bold" style={{ color: colors.primary }}>
-                                {cart.length}
-                              </span>
+                          {isAdmin ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center space-x-2">
+                                  <Settings className="w-4 h-4" />
+                                  <span>Productos gestionados</span>
+                                </span>
+                                <span className="font-bold" style={{ color: colors.primary }}>
+                                  89
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center space-x-2">
+                                  <ShoppingBag className="w-4 h-4" />
+                                  <span>Pedidos procesados</span>
+                                </span>
+                                <span className="font-bold" style={{ color: colors.primary }}>
+                                  156
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center space-x-2">
+                                  <User className="w-4 h-4" />
+                                  <span>Usuarios registrados</span>
+                                </span>
+                                <span className="font-bold" style={{ color: colors.primary }}>
+                                  1,234
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center space-x-2">
-                                <Heart className="w-4 h-4" />
-                                <span>Productos favoritos</span>
-                              </span>
-                              <span className="font-bold" style={{ color: colors.primary }}>
-                                {favorites.length}
-                              </span>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center space-x-2">
+                                  <ShoppingBag className="w-4 h-4" />
+                                  <span>Productos en carrito</span>
+                                </span>
+                                <span className="font-bold" style={{ color: colors.primary }}>
+                                  {cart.length}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center space-x-2">
+                                  <Heart className="w-4 h-4" />
+                                  <span>Productos favoritos</span>
+                                </span>
+                                <span className="font-bold" style={{ color: colors.primary }}>
+                                  {favorites.length}
+                                </span>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -191,12 +242,89 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
 
                 {activeTab === 'orders' && (
                   <div>
-                    <h3 className="text-xl font-semibold mb-6">Historial de Pedidos</h3>
-                    <div className="text-center py-12">
-                      <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                      <p className="text-gray-500">No tienes pedidos aún</p>
-                      <p className="text-gray-400 text-sm">Tus pedidos aparecerán aquí una vez que realices una compra</p>
-                    </div>
+                    {isAdmin ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-xl font-semibold">Gestión de Pedidos</h3>
+                          <button
+                            onClick={() => window.location.href = '/admin'}
+                            className="px-4 py-2 rounded-lg text-white font-medium"
+                            style={{ backgroundColor: colors.primary }}
+                          >
+                            Ir al Panel de Admin
+                          </button>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="bg-blue-50 p-6 rounded-lg">
+                            <h4 className="font-semibold mb-4 text-blue-800">Pedidos Pendientes</h4>
+                            <div className="text-3xl font-bold text-blue-600 mb-2">12</div>
+                            <p className="text-blue-700 text-sm">Requieren atención</p>
+                          </div>
+                          <div className="bg-green-50 p-6 rounded-lg">
+                            <h4 className="font-semibold mb-4 text-green-800">Pedidos Completados</h4>
+                            <div className="text-3xl font-bold text-green-600 mb-2">156</div>
+                            <p className="text-green-700 text-sm">Este mes</p>
+                          </div>
+                          <div className="bg-yellow-50 p-6 rounded-lg">
+                            <h4 className="font-semibold mb-4 text-yellow-800">Ingresos del Mes</h4>
+                            <div className="text-3xl font-bold text-yellow-600 mb-2">$2.4M</div>
+                            <p className="text-yellow-700 text-sm">+15% vs mes anterior</p>
+                          </div>
+                          <div className="bg-purple-50 p-6 rounded-lg">
+                            <h4 className="font-semibold mb-4 text-purple-800">Productos Activos</h4>
+                            <div className="text-3xl font-bold text-purple-600 mb-2">89</div>
+                            <p className="text-purple-700 text-sm">En catálogo</p>
+                          </div>
+                        </div>
+                        <div className="mt-8">
+                          <h4 className="font-semibold mb-4">Acciones Rápidas</h4>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <button
+                              onClick={() => window.location.href = '/admin'}
+                              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            >
+                              <Settings className="w-6 h-6 mb-2" style={{ color: colors.primary }} />
+                              <div className="font-medium">Panel Completo</div>
+                              <div className="text-sm text-gray-500">Acceder al dashboard</div>
+                            </button>
+                            <button 
+                              onClick={() => window.location.href = '/admin'}
+                              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            >
+                              <ShoppingBag className="w-6 h-6 mb-2" style={{ color: colors.primary }} />
+                              <div className="font-medium">Gestionar Productos</div>
+                              <div className="text-sm text-gray-500">Agregar, editar, eliminar</div>
+                            </button>
+                            <button 
+                              onClick={() => window.location.href = '/admin'}
+                              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            >
+                              <User className="w-6 h-6 mb-2" style={{ color: colors.primary }} />
+                              <div className="font-medium">Ver Reportes</div>
+                              <div className="text-sm text-gray-500">Análisis y estadísticas</div>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-xl font-semibold">Historial de Pedidos</h3>
+                          <button
+                            onClick={() => setShowOrderManagement(true)}
+                            className="px-4 py-2 rounded-lg text-white font-medium"
+                            style={{ backgroundColor: colors.primary }}
+                          >
+                            Ver Todos los Pedidos
+                          </button>
+                        </div>
+                        <div className="text-center py-12">
+                          <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                          <p className="text-gray-500">Gestiona tus pedidos</p>
+                          <p className="text-gray-400 text-sm">Haz clic en "Ver Todos los Pedidos" para acceder a tu historial completo</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -208,11 +336,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                         <h4 className="font-medium mb-2">Notificaciones</h4>
                         <div className="space-y-3">
                           <label className="flex items-center space-x-3">
-                            <input type="checkbox" defaultChecked className="rounded" />
+                            <input 
+                              type="checkbox" 
+                              defaultChecked 
+                              className="rounded" 
+                              onChange={(e) => console.log('Notificaciones productos:', e.target.checked)}
+                            />
                             <span>Recibir notificaciones de nuevos productos</span>
                           </label>
                           <label className="flex items-center space-x-3">
-                            <input type="checkbox" defaultChecked className="rounded" />
+                            <input 
+                              type="checkbox" 
+                              defaultChecked 
+                              className="rounded" 
+                              onChange={(e) => console.log('Ofertas email:', e.target.checked)}
+                            />
                             <span>Recibir ofertas especiales por email</span>
                           </label>
                         </div>
@@ -222,11 +360,20 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                         <h4 className="font-medium mb-2">Privacidad</h4>
                         <div className="space-y-3">
                           <label className="flex items-center space-x-3">
-                            <input type="checkbox" className="rounded" />
+                            <input 
+                              type="checkbox" 
+                              className="rounded" 
+                              onChange={(e) => console.log('Perfil público:', e.target.checked)}
+                            />
                             <span>Hacer mi perfil público</span>
                           </label>
                           <label className="flex items-center space-x-3">
-                            <input type="checkbox" defaultChecked className="rounded" />
+                            <input 
+                              type="checkbox" 
+                              defaultChecked 
+                              className="rounded" 
+                              onChange={(e) => console.log('Recomendaciones:', e.target.checked)}
+                            />
                             <span>Permitir recomendaciones personalizadas</span>
                           </label>
                         </div>
@@ -236,6 +383,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
             </div>
+            
+            <OrderManagement 
+              isOpen={showOrderManagement} 
+              onClose={() => setShowOrderManagement(false)} 
+            />
+          </div>
           </motion.div>
         </>
       )}

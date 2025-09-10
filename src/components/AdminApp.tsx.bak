@@ -1,0 +1,42 @@
+import React from 'react';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import AdminDashboardPanel from './AdminDashboardPanel';
+import AdminLogin from './admin/AdminLogin';
+
+const AdminAppContent: React.FC = () => {
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  if (!isAuthenticated) {
+    return <AdminLogin />;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Acceso Denegado</h1>
+          <p className="text-gray-600">No tienes permisos para acceder al panel de administración.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <AdminDashboardPanel />
+    </div>
+  );
+};
+
+const AdminApp: React.FC = () => {
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <AdminAppContent />
+      </ThemeProvider>
+    </AuthProvider>
+  );
+};
+
+export default AdminApp;

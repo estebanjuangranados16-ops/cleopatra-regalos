@@ -8,6 +8,7 @@ import { Product } from '../types';
 import { products as fallbackProducts } from '../utils/constants';
 import ProductsPage from './ProductsPage';
 import AdminPanel from './AdminPanel';
+import SearchBar from './SearchBar';
 
 const Products: React.FC = () => {
   const { colors } = useTheme();
@@ -17,9 +18,12 @@ const Products: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showProductsPage, setShowProductsPage] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'tecnologia' | 'regalos'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'tech' | 'gifts'>('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [filteredBySearch, setFilteredBySearch] = useState<Product[]>([]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -73,9 +77,9 @@ const Products: React.FC = () => {
     loadProducts();
   }, []);
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
+  const filteredProducts = searchTerm ? filteredBySearch : products.filter(product => 
+    selectedCategory === 'all' || product.category === selectedCategory
+  );
   
   const displayProducts = filteredProducts.slice(0, 6);
 
@@ -124,45 +128,36 @@ const Products: React.FC = () => {
               Todos
             </button>
             <button 
-              onClick={() => setSelectedCategory('tecnologia')}
+              onClick={() => setSelectedCategory('tech')}
               className={`px-8 py-3 rounded-full font-semibold transition-all ${
-                selectedCategory === 'tecnologia' 
+                selectedCategory === 'tech' 
                   ? 'text-white' 
                   : 'text-gray-600 hover:text-gray-800'
               }`}
-              style={selectedCategory === 'tecnologia' ? { backgroundColor: colors.primary } : {}}
+              style={selectedCategory === 'tech' ? { backgroundColor: colors.primary } : {}}
             >
               Tecnología
             </button>
             <button 
-              onClick={() => setSelectedCategory('regalos')}
+              onClick={() => setSelectedCategory('gifts')}
               className={`px-8 py-3 rounded-full font-semibold transition-all ${
-                selectedCategory === 'regalos' 
+                selectedCategory === 'gifts' 
                   ? 'text-white' 
                   : 'text-gray-600 hover:text-gray-800'
               }`}
-              style={selectedCategory === 'regalos' ? { backgroundColor: colors.primary } : {}}
+              style={selectedCategory === 'gifts' ? { backgroundColor: colors.primary } : {}}
             >
               Regalos
             </button>
           </div>
           
-          {/* Search and Filter Bar */}
-          <div className="flex justify-center items-center gap-4 mb-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                className="pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-80"
-              />
-            </div>
-            <select className="px-4 py-3 border border-gray-200 rounded-lg focus:outline-none">
-              <option>Ordenar por</option>
-              <option>Precio: Menor a Mayor</option>
-              <option>Precio: Mayor a Menor</option>
-              <option>Popularidad</option>
-            </select>
+          {/* Search Bar */}
+          <div className="mb-8">
+            <SearchBar 
+              products={products}
+              onFilteredProducts={setFilteredBySearch}
+              onSearchChange={setSearchTerm}
+            />
           </div>
           
           {isAdmin && (
@@ -183,9 +178,13 @@ const Products: React.FC = () => {
             <div key={product.id} className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300">
               <div className="relative overflow-hidden rounded-t-xl">
                 <img
-                  src={product.images[0]}
+                  src={product.image}
                   alt={product.name}
                   className="w-full h-72 object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder-image.jpg';
+                  }}
                 />
                 {/* Badge */}
                 {index === 0 && (
@@ -202,7 +201,7 @@ const Products: React.FC = () => {
                 {/* Hover Overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">
                   <span className="text-white text-2xl font-bold mb-4">
-                    {formatPrice(product.price)}
+                    {product.price}
                   </span>
                   <div className="flex gap-3">
                     <button
@@ -211,12 +210,14 @@ const Products: React.FC = () => {
                     >
                       Ver Detalles
                     </button>
-                    <button
-                      onClick={() => addToCart(product)}
-                      className="px-6 py-2 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors"
-                    >
-                      Comprar
-                    </button>
+                    {!isAdmin && (
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="px-6 py-2 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors"
+                      >
+                        Comprar
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -228,7 +229,7 @@ const Products: React.FC = () => {
                 <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-gray-400">
-                    Desde {formatPrice(product.price)}
+                    Desde {product.price}
                   </span>
                   <button className="text-gray-400 hover:text-red-500 transition-colors">
                     <Heart className="w-5 h-5" />
@@ -239,7 +240,15 @@ const Products: React.FC = () => {
           ))}
         </div>
 
-        {/* Ver Más Button */}
+        {/* Results Info and Ver Más Button */}
+        {searchTerm && (
+          <div className="text-center mb-6">
+            <p className="text-gray-600 mb-4">
+              {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''} para "{searchTerm}"
+            </p>
+          </div>
+        )}
+        
         <div className="text-center">
           <button
             onClick={() => setShowProductsPage(true)}
@@ -284,59 +293,11 @@ const Products: React.FC = () => {
                   <div>
                     <div className="relative">
                       <img
-                        src={selectedProduct.images[currentImageIndex]}
+                        src={selectedProduct.image}
                         alt={selectedProduct.name}
                         className="w-full h-96 object-cover rounded-lg mb-4"
                       />
-                      {selectedProduct.images.length > 1 && (
-                        <>
-                          <button
-                            onClick={() => setCurrentImageIndex(prev => 
-                              prev === 0 ? selectedProduct.images.length - 1 : prev - 1
-                            )}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg"
-                          >
-                            ‹
-                          </button>
-                          <button
-                            onClick={() => setCurrentImageIndex(prev => 
-                              prev === selectedProduct.images.length - 1 ? 0 : prev + 1
-                            )}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg"
-                          >
-                            ›
-                          </button>
-                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                            {selectedProduct.images.map((_, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setCurrentImageIndex(index)}
-                                className={`w-2 h-2 rounded-full transition-colors ${
-                                  index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
                     </div>
-                    {selectedProduct.images.length > 1 && (
-                      <div className="grid grid-cols-4 gap-2">
-                        {selectedProduct.images.map((image, index) => (
-                          <img
-                            key={index}
-                            src={image}
-                            alt={`${selectedProduct.name} ${index + 1}`}
-                            onClick={() => setCurrentImageIndex(index)}
-                            className={`w-full h-20 object-cover rounded cursor-pointer transition-all ${
-                              index === currentImageIndex 
-                                ? 'ring-2 ring-blue-500 opacity-100' 
-                                : 'opacity-70 hover:opacity-100'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    )}
                   </div>
                   
                   <div>
@@ -348,30 +309,44 @@ const Products: React.FC = () => {
                     </p>
                     <div className="mb-8">
                       <span className="text-4xl font-bold" style={{ color: colors.primary }}>
-                        {formatPrice(selectedProduct.price)}
+                        {selectedProduct.price}
                       </span>
                     </div>
                     <div className="space-y-4">
-                      <button
-                        onClick={() => {
-                          addToCart(selectedProduct);
-                          setSelectedProduct(null);
-                          setCurrentImageIndex(0);
-                        }}
-                        className="w-full py-4 text-white font-semibold text-lg rounded-lg hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: colors.primary }}
-                      >
-                        Agregar al Carrito
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(null);
-                          setCurrentImageIndex(0);
-                        }}
-                        className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        Seguir Comprando
-                      </button>
+                      {!isAdmin ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              addToCart(selectedProduct);
+                              setSelectedProduct(null);
+                              setCurrentImageIndex(0);
+                            }}
+                            className="w-full py-4 text-white font-semibold text-lg rounded-lg hover:opacity-90 transition-opacity"
+                            style={{ backgroundColor: colors.primary }}
+                          >
+                            Agregar al Carrito
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(null);
+                              setCurrentImageIndex(0);
+                            }}
+                            className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            Seguir Comprando
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(null);
+                            setCurrentImageIndex(0);
+                          }}
+                          className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          Cerrar
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -387,11 +362,7 @@ const Products: React.FC = () => {
           products={filteredProducts}
           onProductsChange={loadProducts}
         />
-        <AdminPanel 
-          isOpen={showAdmin} 
-          onClose={() => setShowAdmin(false)}
-          onProductsChange={loadProducts}
-        />
+
       </div>
     </section>
   );

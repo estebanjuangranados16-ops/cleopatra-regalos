@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, Clock } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
+import LocationMap from './LocationMap';
 
 const Contact: React.FC = () => {
   const { theme, colors } = useTheme();
@@ -16,8 +17,20 @@ const Contact: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission
+    
+    const phoneNumber = '573024547679';
+    const message = encodeURIComponent(
+      `*Nuevo mensaje desde la web:*\n\n` +
+      `*Nombre:* ${formData.name}\n` +
+      `*Email:* ${formData.email}\n` +
+      `*Teléfono:* ${formData.phone}\n` +
+      `*Mensaje:* ${formData.message}`
+    );
+    
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    setFormData({ name: '', email: '', phone: '', message: '' });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -31,7 +44,7 @@ const Contact: React.FC = () => {
     {
       icon: Phone,
       title: 'Teléfono',
-      value: '+57 (1) 234-5678',
+      value: '302 454 7679 / 320 886 9914',
       description: 'Lun - Sáb: 9:00 AM - 7:00 PM'
     },
     {
@@ -42,9 +55,9 @@ const Contact: React.FC = () => {
     },
     {
       icon: MapPin,
-      title: 'Ubicación',
-      value: 'Madrid, Cundinamarca',
-      description: 'Colombia'
+      title: 'Ubicaciones',
+      value: '3 puntos de venta',
+      description: 'Madrid, Cundinamarca'
     },
     {
       icon: Clock,
@@ -77,14 +90,14 @@ const Contact: React.FC = () => {
           </motion.p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Contact Info */}
           <motion.div
             initial={{ x: -50, opacity: 0 }}
             animate={isIntersecting ? { x: 0, opacity: 1 } : {}}
             transition={{ duration: 0.8 }}
           >
-            <div className="grid sm:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {contactInfo.map((info, index) => (
                 <motion.div
                   key={info.title}
@@ -92,20 +105,20 @@ const Contact: React.FC = () => {
                   animate={isIntersecting ? { y: 0, opacity: 1 } : {}}
                   transition={{ delay: 0.4 + index * 0.1, duration: 0.8 }}
                   whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-gray-50 rounded-xl p-6 text-center"
+                  className="bg-gray-50 rounded-xl p-4 sm:p-6 text-center"
                 >
                   <motion.div
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
-                    className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4"
                     style={{ backgroundColor: colors.primaryLight }}
                   >
-                    <info.icon className="w-6 h-6" style={{ color: colors.primary }} />
+                    <info.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: colors.primary }} />
                   </motion.div>
-                  <h3 className="font-bold mb-2" style={{ color: colors.secondary }}>
+                  <h3 className="font-bold mb-1 sm:mb-2 text-sm sm:text-base" style={{ color: colors.secondary }}>
                     {info.title}
                   </h3>
-                  <p className="font-semibold mb-1" style={{ color: colors.primary }}>
+                  <p className="font-semibold mb-1 text-sm sm:text-base" style={{ color: colors.primary }}>
                     {info.value}
                   </p>
                   <p className="text-gray-600 text-sm">{info.description}</p>
@@ -113,17 +126,13 @@ const Contact: React.FC = () => {
               ))}
             </div>
 
-            {/* Map Placeholder */}
+            {/* Interactive Map */}
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={isIntersecting ? { y: 0, opacity: 1 } : {}}
               transition={{ delay: 0.8, duration: 0.8 }}
-              className="bg-gray-200 rounded-xl h-64 flex items-center justify-center"
             >
-              <div className="text-center">
-                <MapPin className="w-12 h-12 mx-auto mb-4" style={{ color: colors.primary }} />
-                <p className="text-gray-600">Mapa de ubicación</p>
-              </div>
+              <LocationMap />
             </motion.div>
           </motion.div>
 
@@ -133,7 +142,7 @@ const Contact: React.FC = () => {
             animate={isIntersecting ? { x: 0, opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={isIntersecting ? { y: 0, opacity: 1 } : {}}
@@ -148,7 +157,7 @@ const Contact: React.FC = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="Tu nombre completo"
                 />
               </motion.div>
@@ -167,7 +176,7 @@ const Contact: React.FC = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="tu@email.com"
                 />
               </motion.div>
@@ -185,7 +194,7 @@ const Contact: React.FC = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
                   placeholder="+57 (1) 234-5678"
                 />
               </motion.div>
@@ -203,8 +212,8 @@ const Contact: React.FC = () => {
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                  rows={4}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-sm sm:text-base sm:rows-5"
                   placeholder="Cuéntanos cómo podemos ayudarte..."
                 />
               </motion.div>
@@ -216,7 +225,7 @@ const Contact: React.FC = () => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                className="w-full py-4 rounded-lg text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center space-x-2"
+                className="w-full py-3 sm:py-4 rounded-lg text-white font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center space-x-2"
                 style={{ backgroundColor: colors.primary }}
               >
                 <Send className="w-5 h-5" />

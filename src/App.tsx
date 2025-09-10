@@ -1,4 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -10,12 +11,22 @@ const Navbar = lazy(() => import('./components/Navbar'));
 const Hero = lazy(() => import('./components/Hero'));
 const About = lazy(() => import('./components/About'));
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
-const Products = lazy(() => import('./components/Products'));
+const Products = lazy(() => import('./components/ProductsComplete'));
 const Features = lazy(() => import('./components/Features'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
 const Contact = lazy(() => import('./components/Contact'));
 const Footer = lazy(() => import('./components/Footer'));
 const Toast = lazy(() => import('./components/Toast'));
+const WhatsAppButton = lazy(() => import('./components/WhatsAppButton'));
+const PWAInstallPrompt = lazy(() => import('./components/PWAInstallPrompt'));
+const AdminRoute = lazy(() => import('./components/AdminRoute'));
+
+// Pages
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -24,7 +35,8 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const App: React.FC = () => {
+// Home component
+const HomePage: React.FC = () => {
   const [showCategorySelector, setShowCategorySelector] = useState(true);
 
   const handleCategorySelect = (category: Theme) => {
@@ -34,35 +46,75 @@ const App: React.FC = () => {
   };
 
   return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <AnimatePresence>
+        {showCategorySelector && (
+          <CategorySelector onSelect={handleCategorySelect} />
+        )}
+      </AnimatePresence>
+
+      {!showCategorySelector && (
+        <>
+          <Navbar />
+          <Hero />
+          <About />
+          <HowItWorks />
+          <Products />
+          <Features />
+          <Testimonials />
+          <Contact />
+          <Footer />
+        </>
+      )}
+    </Suspense>
+  );
+};
+
+const App: React.FC = () => {
+  React.useEffect(() => {
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  }, []);
+
+  return (
     <AuthProvider>
       <ThemeProvider>
-        <div className="App">
-          <AnimatePresence>
-            {showCategorySelector && (
-              <Suspense fallback={<LoadingSpinner />}>
-                <CategorySelector onSelect={handleCategorySelect} />
-              </Suspense>
-            )}
-          </AnimatePresence>
-
-          {!showCategorySelector && (
+        <Router>
+          <div className="App">
             <Suspense fallback={<LoadingSpinner />}>
-              <Navbar />
-              <Hero />
-              <About />
-              <HowItWorks />
-              <Products />
-              <Features />
-              <Testimonials />
-              <Contact />
-              <Footer />
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+              </Routes>
             </Suspense>
-          )}
-          
-          <Suspense fallback={null}>
-            <Toast />
-          </Suspense>
-        </div>
+            
+            <Suspense fallback={null}>
+              <Toast />
+            </Suspense>
+            
+            <Suspense fallback={null}>
+              <WhatsAppButton />
+            </Suspense>
+            
+            <Suspense fallback={null}>
+              <PWAInstallPrompt />
+            </Suspense>
+          </div>
+        </Router>
       </ThemeProvider>
     </AuthProvider>
   );

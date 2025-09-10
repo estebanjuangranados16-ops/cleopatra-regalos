@@ -49,7 +49,7 @@ const ProductModal: React.FC = () => {
             
             <div className="aspect-video bg-gray-100 rounded-t-2xl overflow-hidden">
               <img
-                src={selectedProduct.images[0]}
+                src={selectedProduct.image}
                 alt={selectedProduct.name}
                 className="w-full h-full object-cover"
               />
@@ -93,7 +93,7 @@ const ProductModal: React.FC = () => {
                   ${selectedProduct.price.toLocaleString()}
                 </span>
                 <span className="text-gray-500 line-through ml-2">
-                  ${(selectedProduct.price * 1.2).toLocaleString()}
+                  ${(parseFloat(selectedProduct.price.replace(/[$.,]/g, '')) * 1.2).toLocaleString()}
                 </span>
               </div>
               <div className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">

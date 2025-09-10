@@ -32,7 +32,7 @@ const LightProducts: React.FC = () => {
           {products.slice(0, 6).map((product) => (
             <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <img
-                src={product.images[0]}
+                src={product.image}
                 alt={product.name}
                 className="w-full h-64 object-cover"
                 loading="lazy"
@@ -44,7 +44,7 @@ const LightProducts: React.FC = () => {
                 <p className="text-gray-600 mb-4">{product.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold" style={{ color: colors.primary }}>
-                    {formatPrice(product.price)}
+                    {product.price}
                   </span>
                   <button
                     onClick={() => addToCart(product)}

@@ -1,104 +1,241 @@
-# Cleopatra Regalos - Sitio Web
+# 👑 Cleopatra Regalos - E-commerce Platform
 
-Un sitio web moderno y elegante para Cleopatra Regalos, combinando la sofisticación histórica con tecnología contemporánea.
+> **Tienda online moderna y elegante** que combina la sofisticación histórica con tecnología de vanguardia.
 
-## 🚀 Características
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38B2AC.svg)](https://tailwindcss.com/)
+[![PWA](https://img.shields.io/badge/PWA-Ready-green.svg)](https://web.dev/progressive-web-apps/)
 
-- **Diseño Dinámico**: Temas que alternan entre "Regalos" (paleta dorada) y "Tecnología" (paleta azul)
-- **Responsive**: Diseño mobile-first que se adapta a todos los dispositivos
-- **Animaciones Fluidas**: Más de 50 animaciones con Framer Motion
-- **Componentes Modulares**: Más de 25 componentes React reutilizables
-- **TypeScript**: Tipado estático para mayor robustez
-- **Optimizado**: Lazy loading y animaciones aceleradas por hardware
+## 🎆 Características Principales
 
-## 🛠️ Tecnologías
+### 🎨 **Sistema de Temas Dinámico**
+- **Regalos**: Paleta dorada elegante
+- **Tecnología**: Paleta azul moderna
+- **Cambio instantáneo** entre temas
 
-- **React 18**: Framework principal
-- **TypeScript**: Tipado estático
-- **Tailwind CSS**: Framework de estilos utilitario
-- **Framer Motion**: Librería de animaciones
-- **Lucide React**: Iconos SVG
-- **Context API**: Gestión de estado global
+### 🛋️ **E-commerce Completo**
+- **Carrito de compras** persistente
+- **Sistema de pedidos** con WhatsApp
+- **Autenticación** completa (email/Google)
+- **Panel de administración** avanzado
+- **Sistema de reviews** y calificaciones
 
-## 📦 Instalación
+### 📱 **PWA (Progressive Web App)**
+- **Instalable** en móviles
+- **Funciona offline**
+- **Notificaciones push**
+- **Experiencia nativa**
 
-1. Clona el repositorio:
+### 🎥 **Animaciones Premium**
+- **50+ animaciones** con Framer Motion
+- **Micro-interacciones** fluidas
+- **Transiciones** elegantes
+- **Performance optimizado**
+
+## 🚀 **Inicio Rápido**
+
 ```bash
-git clone <repository-url>
-cd cleopatra
-```
+# Clonar repositorio
+git clone https://github.com/tu-usuario/cleopatra-regalos.git
+cd cleopatra-regalos
 
-2. Instala las dependencias:
-```bash
+# Instalar dependencias
 npm install
-```
 
-3. Inicia el servidor de desarrollo:
-```bash
+# Iniciar desarrollo
 npm start
+
+# Abrir http://localhost:3000
 ```
 
-4. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+## 🔑 **Credenciales de Prueba**
 
-## 🎨 Sistema de Diseño
+### Administrador
+- **Email**: `admin@cleopatraregalos.com`
+- **Contraseña**: `admin123`
 
-### Paleta Regalos (Dorada)
-- Primario: #FFD300
-- Primario Oscuro: #FFA500
-- Primario Claro: #FFF5CC
-- Secundario: #1E293B
-- Acento: #F59E0B
+### Usuario Normal
+- **Registro libre** con cualquier email
+- **Login con Google** (simulado)
 
-### Paleta Tecnología (Azul)
-- Primario: #2563EB
-- Primario Oscuro: #1D4ED8
-- Primario Claro: #DBEAFE
-- Secundario: #1E293B
-- Acento: #3B82F6
+## 🛠️ **Stack Tecnológico**
 
-## 📱 Estructura del Sitio
+| Tecnología | Versión | Propósito |
+|------------|---------|----------|
+| **React** | 18.x | Framework principal |
+| **TypeScript** | 5.x | Tipado estático |
+| **Tailwind CSS** | 3.x | Estilos utilitarios |
+| **Framer Motion** | 10.x | Animaciones |
+| **React Router** | 6.x | Navegación |
+| **Zustand** | 4.x | Estado global |
+| **Lucide React** | Latest | Iconografía |
 
-1. **CategorySelector**: Pantalla inicial interactiva
-2. **Navbar**: Navegación fija con efectos
-3. **Hero**: Sección principal con carrusel
-4. **About**: Información de la empresa con estadísticas
-5. **HowItWorks**: Proceso paso a paso
-6. **Products**: Catálogo con filtros
-7. **Features**: Ventajas competitivas
-8. **Testimonials**: Reseñas de clientes
-9. **Contact**: Formulario de contacto
-10. **Footer**: Enlaces y newsletter
+## 🎨 **Sistema de Diseño**
 
-## 🚀 Scripts Disponibles
+### 🎆 Tema Regalos (Dorado)
+```css
+--primary: #FFD300     /* Dorado brillante */
+--primary-dark: #FFA500 /* Naranja dorado */
+--primary-light: #FFF5CC /* Crema suave */
+--secondary: #1E293B    /* Gris oscuro */
+--accent: #F59E0B       /* Amarillo acento */
+```
 
-- `npm start`: Inicia el servidor de desarrollo
-- `npm build`: Construye la aplicación para producción
-- `npm test`: Ejecuta las pruebas
-- `npm eject`: Expone la configuración (irreversible)
+### 💻 Tema Tecnología (Azul)
+```css
+--primary: #2563EB     /* Azul vibrante */
+--primary-dark: #1D4ED8 /* Azul profundo */
+--primary-light: #DBEAFE /* Azul claro */
+--secondary: #1E293B    /* Gris oscuro */
+--accent: #3B82F6       /* Azul acento */
+```
 
-## 📊 Estadísticas del Proyecto
+## 🏢 **Arquitectura del Proyecto**
 
-- **Componentes**: 25+ componentes React
-- **Líneas de código**: 3,500+
-- **Animaciones**: 50+
-- **Breakpoints**: 5 para responsividad
-- **Colores de tema**: 10
-- **APIs integradas**: 2 (Unsplash y otras)
+```
+src/
+├── components/          # Componentes reutilizables
+│   ├── admin/           # Panel de administración
+│   ├── auth/            # Autenticación
+│   └── ui/              # Componentes UI base
+├── contexts/            # Context API (temas, auth)
+├── hooks/               # Custom hooks
+├── pages/               # Páginas principales
+├── services/            # Lógica de negocio
+├── store/               # Estado global (Zustand)
+├── types/               # Definiciones TypeScript
+└── utils/               # Utilidades y helpers
+```
 
-## 🎯 Características Especiales
+## 📱 **Funcionalidades Implementadas**
 
-- **Selector de Categoría Dinámico**: Cambia todo el tema del sitio
-- **Sistema de Temas**: Colores dinámicos según la categoría
-- **Animaciones Fluidas**: Micro-interacciones y transiciones
-- **Navegación Inteligente**: Navbar adaptativo
-- **Componentes Reutilizables**: Arquitectura modular
+### 🛍️ **E-commerce**
+- ✅ Catálogo de productos dinámico
+- ✅ Carrito de compras persistente
+- ✅ Sistema de favoritos
+- ✅ Búsqueda y filtros avanzados
+- ✅ Checkout completo con WhatsApp
+- ✅ Seguimiento de pedidos
 
-## 📞 Contacto
+### 🔐 **Autenticación**
+- ✅ Login/registro con email
+- ✅ Integración con Google (simulado)
+- ✅ Gestión de perfiles
+- ✅ Roles de usuario (admin/cliente)
+- ✅ Sesiones persistentes
 
-- **Ubicación**: Madrid, Cundinamarca, Colombia
-- **Teléfono**: +57 (1) 234-5678
-- **Email**: info@cleopatraregalos.com
+### 📱 **PWA**
+- ✅ Manifest.json configurado
+- ✅ Service Worker para cache
+- ✅ Instalación en dispositivos
+- ✅ Funcionamiento offline
+
+### ⭐ **Reviews y Calificaciones**
+- ✅ Sistema de estrellas
+- ✅ Comentarios verificados
+- ✅ Distribución de ratings
+- ✅ Solo usuarios autenticados
+
+### 🛠️ **Panel de Admin**
+- ✅ Gestión de productos (CRUD)
+- ✅ Subida de imágenes (cámara/archivos)
+- ✅ Estadísticas y métricas
+- ✅ Gestión de pedidos
+
+## 🚀 **Scripts Disponibles**
+
+```bash
+npm start          # Servidor de desarrollo
+npm run build      # Build para producción
+npm test           # Ejecutar tests
+npm run lint       # Linter de código
+npm run format     # Formatear código
+```
+
+## 📊 **Estadísticas del Proyecto**
+
+| Métrica | Valor |
+|---------|-------|
+| **Componentes React** | 30+ |
+| **Líneas de código** | 5,000+ |
+| **Animaciones** | 60+ |
+| **Breakpoints responsive** | 5 |
+| **Temas de color** | 2 completos |
+| **Páginas** | 8 principales |
+| **Hooks personalizados** | 6 |
+| **Servicios** | 4 |
+
+## 🕰️ **Roadmap**
+
+### 🔥 **Próximas Funcionalidades**
+- [ ] Integración con pasarelas de pago reales
+- [ ] Sistema de cupones y descuentos
+- [ ] Chat en vivo con clientes
+- [ ] Notificaciones push avanzadas
+- [ ] Analytics y métricas detalladas
+- [ ] API REST completa
+- [ ] Tests automatizados
+- [ ] Deployment en AWS/Vercel
+
+### 🔧 **Mejoras Técnicas**
+- [ ] Optimización de bundle size
+- [ ] Lazy loading avanzado
+- [ ] CDN para imágenes
+- [ ] Caché inteligente
+- [ ] SEO optimization
+- [ ] Accesibilidad (WCAG 2.1)
+
+## 🌟 **Características Únicas**
+
+### 🎨 **Temas Dinámicos**
+Cambio instantáneo entre "Regalos" y "Tecnología" que transforma:
+- Colores de toda la interfaz
+- Iconografía temática
+- Contenido contextual
+- Animaciones personalizadas
+
+### 📱 **Responsive Excellence**
+- **Mobile-first** design
+- **5 breakpoints** optimizados
+- **Touch-friendly** en móviles
+- **Navegación adaptativa**
+
+### ⚡ **Performance**
+- **Lazy loading** inteligente
+- **Code splitting** por rutas
+- **Animaciones** aceleradas por hardware
+- **Caché optimizado**
+
+## 🤝 **Contribuir**
+
+¡Las contribuciones son bienvenidas! Lee nuestra [Guía de Contribución](CONTRIBUTING.md) para empezar.
+
+### 👥 **Equipo de Desarrollo**
+- **Frontend**: React + TypeScript
+- **UI/UX**: Tailwind CSS + Framer Motion
+- **Estado**: Zustand + Context API
+- **Autenticación**: Custom Auth Service
+
+## 📞 **Contacto**
+
+- **📍 Ubicación**: Madrid, Cundinamarca, Colombia
+- **📱 Teléfonos**: 302 454 7679 / 320 886 9914
+- **📧 Email**: info@cleopatraregalos.com
+- **🌐 WhatsApp**: [Contactar](https://wa.me/573024547679)
+
+## 📜 **Licencia**
+
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
 
 ---
 
-Desarrollado con ❤️ para Cleopatra Regalos
+<div align="center">
+
+**Desarrollado con ❤️ para Cleopatra Regalos**
+
+[![React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/Built%20with-TypeScript-3178C6.svg)](https://www.typescriptlang.org/)
+[![Tailwind](https://img.shields.io/badge/Styled%20with-Tailwind-38B2AC.svg)](https://tailwindcss.com/)
+
+</div>

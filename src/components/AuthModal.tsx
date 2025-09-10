@@ -3,88 +3,95 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { useStore } from '../store/useStore';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: 'login' | 'register';
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
   const { colors } = useTheme();
-  const { login, register } = useAuth();
-  const { addToast } = useStore();
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
+  const { login, register, loginWithGoogle } = useAuth();
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: ''
+    name: '',
+    confirmPassword: ''
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.email) {
+      newErrors.email = 'El email es requerido';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email inválido';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es requerida';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Mínimo 6 caracteres';
+    }
+
+    if (mode === 'register') {
+      if (!formData.name) {
+        newErrors.name = 'El nombre es requerido';
+      }
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!validateForm()) return;
 
+    setLoading(true);
     try {
-      let success = false;
-      
-      if (isLogin) {
-        success = await login(formData.email, formData.password);
-        if (success) {
-          addToast({
-            type: 'success',
-            title: '¡Bienvenido!',
-            message: 'Has iniciado sesión correctamente'
-          });
-          onClose();
-        } else {
-          addToast({
-            type: 'error',
-            title: 'Error de autenticación',
-            message: 'Email o contraseña incorrectos'
-          });
-        }
+      if (mode === 'login') {
+        await login(formData.email, formData.password);
       } else {
-        success = await register(formData.email, formData.password, formData.name);
-        if (success) {
-          addToast({
-            type: 'success',
-            title: '¡Cuenta creada!',
-            message: 'Tu cuenta se ha creado exitosamente'
-          });
-          onClose();
-        } else {
-          addToast({
-            type: 'error',
-            title: 'Error de registro',
-            message: 'El email ya está registrado'
-          });
-        }
+        await register(formData.email, formData.password, formData.name);
       }
-    } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Ocurrió un error inesperado'
-      });
+      onClose();
+    } catch (error: any) {
+      setErrors({ submit: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const demoCredentials = [
-    { email: 'admin@cleopatra.com', password: 'admin123', role: 'Admin' },
-    { email: 'cliente@test.com', password: '123456', role: 'Cliente' }
-  ];
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      onClose();
+    } catch (error: any) {
+      setErrors({ submit: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+    setErrors({});
+  };
+
+  const switchMode = () => {
+    setMode(mode === 'login' ? 'register' : 'login');
+    resetForm();
+  };
 
   return (
     <AnimatePresence>
@@ -94,136 +101,165 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-[9999]"
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
             onClick={onClose}
           />
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="fixed inset-4 bg-white rounded-2xl z-[9999] flex max-w-4xl mx-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="flex-1 p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold" style={{ color: colors.secondary }}>
-                  {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl pointer-events-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b">
+                <h2 className="text-2xl font-bold" style={{ color: colors.secondary }}>
+                  {mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
                 </h2>
-                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
-                  <X className="w-6 h-6" />
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {!isLogin && (
+              {/* Content */}
+              <div className="p-6">
+                {/* Google Login */}
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-4 disabled:opacity-50"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Continuar con Google
+                </button>
+
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">o</span>
+                  </div>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {mode === 'register' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Nombre completo</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            errors.name ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Tu nombre completo"
+                        />
+                      </div>
+                      {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                    </div>
+                  )}
+
                   <div>
-                    <label className="block text-sm font-medium mb-2">Nombre Completo</label>
+                    <label className="block text-sm font-medium mb-2">Email</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Tu nombre completo"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors.email ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="tu@email.com"
                       />
                     </div>
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                   </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="tu@email.com"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Contraseña</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-4 rounded-lg text-white font-semibold text-lg disabled:opacity-50"
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  {loading ? 'Procesando...' : (isLogin ? 'Iniciar Sesión' : 'Crear Cuenta')}
-                </motion.button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <p className="text-gray-600">
-                  {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
-                  <button
-                    onClick={() => setIsLogin(!isLogin)}
-                    className="ml-2 font-semibold hover:underline"
-                    style={{ color: colors.primary }}
-                  >
-                    {isLogin ? 'Regístrate' : 'Inicia Sesión'}
-                  </button>
-                </p>
-              </div>
-            </div>
-
-            {/* Demo Credentials Panel */}
-            <div className="w-80 bg-gray-50 p-6 rounded-r-2xl">
-              <h3 className="text-lg font-semibold mb-4" style={{ color: colors.secondary }}>
-                Credenciales de Prueba
-              </h3>
-              <div className="space-y-4">
-                {demoCredentials.map((cred, index) => (
-                  <div key={index} className="bg-white p-4 rounded-lg border">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm">{cred.role}</span>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Contraseña</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors.password ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Mínimo 6 caracteres"
+                      />
                       <button
-                        onClick={() => setFormData({ ...formData, email: cred.email, password: cred.password })}
-                        className="text-xs px-2 py-1 rounded"
-                        style={{ backgroundColor: colors.primary, color: 'white' }}
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        Usar
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-600 mb-1">Email: {cred.email}</p>
-                    <p className="text-xs text-gray-600">Contraseña: {cred.password}</p>
+                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <p className="text-xs text-blue-800">
-                  💡 <strong>Tip:</strong> Usa las credenciales de Admin para acceder al panel de administración.
-                </p>
+
+                  {mode === 'register' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Confirmar contraseña</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.confirmPassword}
+                          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Confirma tu contraseña"
+                        />
+                      </div>
+                      {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+                    </div>
+                  )}
+
+                  {errors.submit && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-red-700 text-sm">{errors.submit}</p>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 rounded-lg text-white font-semibold transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    {loading ? 'Procesando...' : (mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta')}
+                  </button>
+                </form>
+
+                {/* Switch Mode */}
+                <div className="mt-6 text-center">
+                  <p className="text-gray-600">
+                    {mode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+                    <button
+                      onClick={switchMode}
+                      className="ml-2 font-semibold hover:underline"
+                      style={{ color: colors.primary }}
+                    >
+                      {mode === 'login' ? 'Regístrate' : 'Inicia sesión'}
+                    </button>
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>

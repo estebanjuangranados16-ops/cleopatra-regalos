@@ -1,0 +1,213 @@
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trash2, AlertTriangle, X } from 'lucide-react';
+import { useStore } from '../../store/useStore';
+import { Product } from '../../types';
+
+const DeleteProductTable: React.FC = () => {
+  const { products, loadProducts, deleteProduct } = useStore();
+  const [loading, setLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  const handleDelete = async (productId: string) => {
+    setLoading(true);
+    try {
+      await deleteProduct(productId);
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
+
+  const getStatusBadge = (status: string) => {
+    return status === 'active' ? (
+      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+        Activo
+      </span>
+    ) : (
+      <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+        Inactivo
+      </span>
+    );
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-white rounded-lg shadow-lg p-8"
+    >
+      <h2 className="text-3xl font-bold text-gray-800 mb-8">Eliminar Productos</h2>
+      
+      {products.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No hay productos disponibles</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  Producto
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  Precio
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  Categoría
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  Stock
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {products.map((product, index) => (
+                <motion.tr
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <img
+                        src={product.images?.[0] || '/placeholder-image.jpg'}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded-lg mr-4"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {product.name}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {product.description}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {formatPrice(product.price)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full capitalize">
+                      {product.category}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    0 {/* Placeholder para stock */}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge('active')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <motion.button
+                      onClick={() => setDeleteConfirm(product.id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      style={{ backgroundColor: '#e74c3c' }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar
+                    </motion.button>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modal de confirmación */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg p-8 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Confirmar Eliminación
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Esta acción no se puede deshacer
+                  </p>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 mb-8">
+                ¿Estás seguro de que deseas eliminar este producto? 
+                Se perderán todos los datos asociados.
+              </p>
+              
+              <div className="flex gap-4">
+                <motion.button
+                  onClick={() => handleDelete(deleteConfirm)}
+                  disabled={loading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 px-4 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: '#e74c3c' }}
+                >
+                  {loading ? 'Eliminando...' : 'Sí, Eliminar'}
+                </motion.button>
+                
+                <motion.button
+                  onClick={() => setDeleteConfirm(null)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 px-4 py-3 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancelar
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+export default DeleteProductTable;

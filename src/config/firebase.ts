@@ -3,13 +3,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAL9rMO4HOIhbLttVb8FeT9X20eXxO2cWs",
-  authDomain: "cleopatra-7b03b.firebaseapp.com",
-  projectId: "cleopatra-7b03b",
-  storageBucket: "cleopatra-7b03b.firebasestorage.app",
-  messagingSenderId: "122861877579",
-  appId: "1:122861877579:web:3bdda167a1cc18347510ce",
-  measurementId: "G-5PR3W3E7G4"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

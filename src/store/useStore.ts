@@ -92,7 +92,10 @@ export const useStore = create<StoreState>()(persist((set, get) => ({
   getCartTotal: () => {
     const { cart } = get();
     return cart.reduce((total, item) => {
-      return total + (item.price * item.quantity);
+      const price = typeof item.price === 'string' 
+        ? parseFloat(item.price.replace(/[$.,]/g, ''))
+        : item.price;
+      return total + (price * item.quantity);
     }, 0);
   },
   getCartItemsCount: () => {

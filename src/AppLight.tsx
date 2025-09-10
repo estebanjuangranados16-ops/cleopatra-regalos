@@ -8,7 +8,7 @@ import CategorySelector from './components/CategorySelector';
 import Navbar from './components/Navbar';
 import LightHero from './components/LightHero';
 import About from './components/About';
-import Products from './components/Products';
+import Products from './components/ProductsSimple';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 

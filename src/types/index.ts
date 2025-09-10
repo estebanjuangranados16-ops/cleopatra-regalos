@@ -4,10 +4,12 @@ export type Category = 'regalos' | 'tecnologia';
 export interface Product {
   id: string | number;
   name: string;
-  price: string;
-  image: string;
+  price: string | number;
+  image?: string;
   images?: string[];
-  category: 'gifts' | 'tech';
+  videos?: string[];
+  images360?: string[];
+  category: 'regalos' | 'tecnologia';
   description: string;
   createdAt?: string;
 }

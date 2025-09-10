@@ -8,7 +8,7 @@ import CategorySelector from './components/CategorySelector';
 import Navbar from './components/Navbar';
 import LightHero from './components/LightHero';
 import About from './components/About';
-import Products from './components/ProductsSimple';
+import LightProducts from './components/LightProducts';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 
@@ -34,7 +34,7 @@ const AppLight: React.FC = () => {
               <Navbar />
               <LightHero />
               <About />
-              <Products />
+              <LightProducts />
               <Contact />
               <Footer />
             </>

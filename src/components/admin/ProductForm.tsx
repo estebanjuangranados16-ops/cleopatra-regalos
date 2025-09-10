@@ -216,11 +216,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
       const productData = {
         name: formData.name.trim(),
         price: `$${Number(formData.price).toLocaleString()}`,
-        category: formData.category,
+        category: formData.category === 'gifts' ? 'regalos' : 'tecnologia',
         image: formData.images[0] || 'https://via.placeholder.com/300x200',
         images: formData.images,
         description: formData.description.trim()
-      };
+      } as any;
 
       if (product) {
         await productService.updateProduct(product.id.toString(), productData);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parsePrice, formatPrice } from '../utils/priceHelpers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CreditCard, Truck, MapPin, Phone, Mail, User, ArrowLeft } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -433,7 +434,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ isOpen, onClose }) => {
                     {cart.map((item) => (
                       <div key={item.id} className="flex justify-between text-sm">
                         <span className="truncate mr-2">{item.name} x{item.quantity}</span>
-                        <span className="font-medium">{formatPrice(parseFloat(item.price.replace(/[$.,]/g, '')) * item.quantity)}</span>
+                        <span className="font-medium">{formatPrice(parsePrice(item.price) * item.quantity)}</span>
                       </div>
                     ))}
                   </div>

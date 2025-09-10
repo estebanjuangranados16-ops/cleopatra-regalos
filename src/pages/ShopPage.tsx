@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ShoppingCart, Search, Filter, Grid, List, ArrowLeft, Eye, Heart, X, Star } from 'lucide-react';
+import { ShoppingCart, Search, Filter, Grid, List, ArrowLeft, Eye, Heart, X, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,7 +23,32 @@ const ShopPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [cardImageIndexes, setCardImageIndexes] = useState<{[key: string]: number}>({});
   const itemsPerPage = 12;
+
+  // Keyboard navigation for modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedProduct) return;
+      
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextModalImage();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevModalImage();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setSelectedProduct(null);
+      }
+    };
+
+    if (selectedProduct) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedProduct, currentImageIndex]);
 
   // Load products from Firebase
   useEffect(() => {
@@ -116,6 +141,36 @@ const ShopPage: React.FC = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const nextCardImage = (productId: string, totalImages: number) => {
+    setCardImageIndexes(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) + 1) % totalImages
+    }));
+  };
+
+  const prevCardImage = (productId: string, totalImages: number) => {
+    setCardImageIndexes(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) - 1 + totalImages) % totalImages
+    }));
+  };
+
+  const nextModalImage = () => {
+    if (selectedProduct?.images && selectedProduct.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === selectedProduct.images!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const prevModalImage = () => {
+    if (selectedProduct?.images && selectedProduct.images.length > 1) {
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? selectedProduct.images!.length - 1 : prev - 1
+      );
+    }
+  };
 
   const formatPrice = (price: string | number) => {
     if (typeof price === 'number') {
@@ -263,9 +318,9 @@ const ShopPage: React.FC = () => {
                 : 'bg-white rounded-2xl shadow-lg overflow-hidden flex gap-4 p-4 hover:shadow-xl transition-all group'
               }
             >
-              <div className={viewMode === 'grid' ? 'relative overflow-hidden' : 'relative flex-shrink-0'}>
+              <div className={`${viewMode === 'grid' ? 'relative overflow-hidden group' : 'relative flex-shrink-0'}`}>
                 <img
-                  src={(product.images && product.images[0]) || product.image}
+                  src={(product.images && product.images[cardImageIndexes[String(product.id)] || 0]) || product.image}
                   alt={product.name}
                   className={viewMode === 'grid' 
                     ? 'w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500'
@@ -273,18 +328,46 @@ const ShopPage: React.FC = () => {
                   }
                   loading="lazy"
                 />
+                
+                {/* Navigation Arrows for Multiple Images */}
+                {viewMode === 'grid' && product.images && product.images.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevCardImage(String(product.id), product.images!.length);
+                      }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextCardImage(String(product.id), product.images!.length);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+                
                 {viewMode === 'grid' && (
                   <>
                     {product.images && product.images.length > 1 && (
                       <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
-                        +{product.images.length - 1}
+                        {(cardImageIndexes[String(product.id)] || 0) + 1}/{product.images.length}
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-3">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => setSelectedProduct(product)}
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setCurrentImageIndex(0);
+                        }}
                         className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-800 hover:bg-gray-100"
                         title="Ver detalles"
                       >
@@ -341,7 +424,10 @@ const ShopPage: React.FC = () => {
                   {viewMode === 'list' ? (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setSelectedProduct(product)}
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setCurrentImageIndex(0);
+                        }}
                         className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         title="Ver detalles"
                       >
@@ -457,20 +543,70 @@ const ShopPage: React.FC = () => {
                     <div>
                       {selectedProduct.images && selectedProduct.images.length > 0 ? (
                         <div className="space-y-4">
-                          <img
-                            src={selectedProduct.images[0]}
-                            alt={selectedProduct.name}
-                            className="w-full h-96 object-cover rounded-lg"
-                          />
+                          <div className="relative">
+                            <img
+                              src={selectedProduct.images[currentImageIndex]}
+                              alt={selectedProduct.name}
+                              className="w-full h-96 object-cover rounded-lg"
+                            />
+                            
+                            {/* Image Counter */}
+                            {selectedProduct.images.length > 1 && (
+                              <div className="absolute top-4 right-4 px-3 py-1 bg-black/70 text-white text-sm rounded-full">
+                                {currentImageIndex + 1} / {selectedProduct.images.length}
+                              </div>
+                            )}
+                            
+                            {/* Navigation Arrows */}
+                            {selectedProduct.images.length > 1 && (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    prevModalImage();
+                                  }}
+                                  className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+                                >
+                                  <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    nextModalImage();
+                                  }}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+                                >
+                                  <ChevronRight className="w-5 h-5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          
                           {selectedProduct.images.length > 1 && (
                             <div className="grid grid-cols-4 gap-2">
-                              {selectedProduct.images.slice(1, 5).map((image, index) => (
-                                <img
+                              {selectedProduct.images.map((image, index) => (
+                                <button
                                   key={index}
-                                  src={image}
-                                  alt={`${selectedProduct.name} ${index + 2}`}
-                                  className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                />
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurrentImageIndex(index);
+                                  }}
+                                  className={`w-full h-20 rounded overflow-hidden transition-all ${
+                                    index === currentImageIndex
+                                      ? 'ring-2 opacity-100'
+                                      : 'opacity-70 hover:opacity-100'
+                                  }`}
+                                  style={{
+                                    borderColor: index === currentImageIndex ? colors.primary : 'transparent',
+                                    borderWidth: index === currentImageIndex ? '2px' : '0px'
+                                  }}
+                                >
+                                  <img
+                                    src={image}
+                                    alt={`${selectedProduct.name} ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </button>
                               ))}
                             </div>
                           )}

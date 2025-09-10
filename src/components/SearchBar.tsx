@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parsePrice } from '../utils/priceHelpers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Filter, SlidersHorizontal } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -52,7 +53,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ products, onFilteredProducts, onS
       };
       const [min, max] = ranges[filters.priceRange as keyof typeof ranges];
       filtered = filtered.filter(product => {
-        const price = parseFloat(product.price.replace(/[$.,]/g, ''));
+        const price = parsePrice(product.price);
         return price >= min && price < max;
       });
     }
@@ -61,9 +62,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ products, onFilteredProducts, onS
     filtered.sort((a, b) => {
       switch (filters.sortBy) {
         case 'price-low':
-          return parseFloat(a.price.replace(/[$.,]/g, '')) - parseFloat(b.price.replace(/[$.,]/g, ''));
+          return parsePrice(a.price) - parsePrice(b.price);
         case 'price-high':
-          return parseFloat(b.price.replace(/[$.,]/g, '')) - parseFloat(a.price.replace(/[$.,]/g, ''));
+          return parsePrice(b.price) - parsePrice(a.price);
         case 'name':
         default:
           return a.name.localeCompare(b.name);

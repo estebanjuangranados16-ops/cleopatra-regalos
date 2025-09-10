@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingCart, Heart, Star } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useTheme } from '../contexts/ThemeContext';
+import { parsePrice } from '../utils/priceHelpers';
 
 const ProductModal: React.FC = () => {
   const { colors } = useTheme();
@@ -93,7 +94,7 @@ const ProductModal: React.FC = () => {
                   ${selectedProduct.price.toLocaleString()}
                 </span>
                 <span className="text-gray-500 line-through ml-2">
-                  ${(parseFloat(selectedProduct.price.replace(/[$.,]/g, '')) * 1.2).toLocaleString()}
+                  ${(parsePrice(selectedProduct.price) * 1.2).toLocaleString()}
                 </span>
               </div>
               <div className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">

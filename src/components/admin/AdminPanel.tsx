@@ -57,12 +57,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
         id: p.id.toString(),
         name: p.name,
         price: typeof p.price === 'string' ? p.price : String(p.price),
-        category: p.category,
+        category: p.category === 'regalos' ? 'gifts' : p.category === 'tecnologia' ? 'tech' : 'gifts',
         image: p.image,
         images: p.images,
         description: p.description,
         createdAt: p.createdAt
-      })));
+      })) as any);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {

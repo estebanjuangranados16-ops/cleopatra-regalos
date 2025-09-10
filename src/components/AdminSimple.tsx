@@ -33,11 +33,11 @@ const AdminSimple: React.FC<AdminSimpleProps> = ({ isOpen, onClose }) => {
       setProducts(data.map(p => ({
         id: p.id.toString(),
         name: p.name,
-        price: p.price,
-        category: p.category,
+        price: typeof p.price === 'string' ? p.price : String(p.price),
+        category: p.category === 'regalos' ? 'gifts' : p.category === 'tecnologia' ? 'tech' : 'gifts',
         image: p.image,
         description: p.description
-      })));
+      })) as any);
     } catch (error) {
       console.error('Error loading products:', error);
     }
@@ -58,10 +58,10 @@ const AdminSimple: React.FC<AdminSimpleProps> = ({ isOpen, onClose }) => {
       const newProduct = {
         name: form.name,
         price: `$${parseFloat(form.price).toLocaleString()}`,
-        category: form.category as 'gifts' | 'tech',
+        category: form.category === 'gifts' ? 'regalos' : 'tecnologia',
         image: form.image,
         description: form.description
-      };
+      } as any;
 
       await productService.addProduct(newProduct);
       await loadProducts();

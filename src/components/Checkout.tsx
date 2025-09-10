@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parsePrice, formatPrice } from '../utils/priceHelpers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CreditCard, Truck, MapPin, Phone, Mail, User } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -76,7 +77,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
         name: item.name,
         price: typeof item.price === 'string' ? parseFloat(item.price.replace(/[$.,]/g, '')) : item.price,
         quantity: item.quantity,
-        image: item.image
+        image: item.image || '/placeholder-image.jpg'
       }));
 
       const shipping: ShippingInfo = {
@@ -422,7 +423,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose }) => {
                             {cart.map((item) => (
                               <div key={item.id} className="flex justify-between">
                                 <span>{item.name} x{item.quantity}</span>
-                                <span>{formatPrice(parseFloat(item.price.replace(/[$.,]/g, '')) * item.quantity)}</span>
+                                <span>{formatPrice(parsePrice(item.price) * item.quantity)}</span>
                               </div>
                             ))}
                           </div>

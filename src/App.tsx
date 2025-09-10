@@ -27,6 +27,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const ShopPage = lazy(() => import('./pages/ShopPageEnhanced'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -94,6 +95,7 @@ const App: React.FC = () => {
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/shop" element={<ShopPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/cart" element={<CartPage />} />

@@ -1,5 +1,6 @@
 import React from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStore } from '../store/useStore';
 import { products } from '../utils/constants';
@@ -7,6 +8,7 @@ import { products } from '../utils/constants';
 const LightProducts: React.FC = () => {
   const { colors } = useTheme();
   const { addToCart } = useStore();
+  const navigate = useNavigate();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -58,6 +60,17 @@ const LightProducts: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <button
+            onClick={() => navigate('/shop')}
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-white font-semibold text-lg transition-all duration-300 hover:scale-105 shadow-lg"
+            style={{ backgroundColor: colors.primary }}
+          >
+            Ver Todos los Productos
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </section>

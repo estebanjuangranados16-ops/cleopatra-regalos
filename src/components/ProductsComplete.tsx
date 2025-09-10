@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Settings, Eye, Heart, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useStore } from '../store/useStore';
@@ -12,6 +13,7 @@ const ProductsComplete: React.FC = () => {
   const { colors } = useTheme();
   const { isAdmin } = useAuth();
   const { addToCart, addToFavorites, removeFromFavorites, isFavorite, setSelectedProduct } = useStore();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -225,6 +227,7 @@ const ProductsComplete: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/shop')}
             className="px-8 py-4 rounded-full text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
             style={{ backgroundColor: colors.primary }}
           >

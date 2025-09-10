@@ -11,11 +11,11 @@ class AuthService {
 
   private initializeAdminUser() {
     // Crear usuario admin por defecto si no existe
-    const adminExists = this.users.find(u => u.email === 'admin@cleopatraregalos.com');
+    const adminExists = this.users.find(u => u.email === 'admin@cleopatra.com');
     if (!adminExists) {
       const adminUser: User = {
         id: 'admin_001',
-        email: 'admin@cleopatraregalos.com',
+        email: 'admin@cleopatra.com',
         name: 'Administrador',
         role: 'admin',
         provider: 'email',
@@ -35,14 +35,32 @@ class AuthService {
 
   async loginWithEmail(email: string, password: string): Promise<User> {
     // Credenciales específicas para admin
-    if (email === 'admin@cleopatraregalos.com' && password === 'admin123') {
-      const adminUser = this.users.find(u => u.email === email);
-      if (adminUser) {
-        adminUser.lastLogin = new Date().toISOString();
-        this.currentUser = adminUser;
-        this.saveToStorage();
-        return adminUser;
+    if (email === 'admin@cleopatra.com' && password === 'admin123') {
+      let adminUser = this.users.find(u => u.email === email);
+      if (!adminUser) {
+        // Crear admin si no existe
+        adminUser = {
+          id: 'admin_001',
+          email: 'admin@cleopatra.com',
+          name: 'Administrador',
+          role: 'admin',
+          provider: 'email',
+          verified: true,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          preferences: {
+            notifications: true,
+            newsletter: false,
+            theme: 'tech'
+          }
+        };
+        this.users.push(adminUser);
       }
+      
+      adminUser.lastLogin = new Date().toISOString();
+      this.currentUser = adminUser;
+      this.saveToStorage();
+      return adminUser;
     }
     
     const user = this.users.find(u => u.email === email);

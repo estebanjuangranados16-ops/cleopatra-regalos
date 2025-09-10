@@ -52,7 +52,7 @@ npm start
 ## 🔑 **Credenciales de Prueba**
 
 ### Administrador
-- **Email**: `admin@cleopatraregalos.com`
+- **Email**: `admin@cleopatra.com`
 - **Contraseña**: `admin123`
 
 ### Usuario Normal

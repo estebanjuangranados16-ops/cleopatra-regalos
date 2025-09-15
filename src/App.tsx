@@ -6,13 +6,14 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Theme } from './types';
 
 // Lazy load components
-const CategorySelector = lazy(() => import('./components/CategorySelector'));
+const CategorySelector = lazy(() => import('./components/CategorySelectorFixed'));
 const Navbar = lazy(() => import('./components/Navbar'));
 const Hero = lazy(() => import('./components/Hero'));
 const About = lazy(() => import('./components/About'));
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const Products = lazy(() => import('./components/ProductsComplete'));
 const Features = lazy(() => import('./components/Features'));
+const Gallery = lazy(() => import('./components/Gallery'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
 const Contact = lazy(() => import('./components/Contact'));
 const Footer = lazy(() => import('./components/Footer'));
@@ -62,6 +63,7 @@ const HomePage: React.FC = () => {
           <HowItWorks />
           <Products />
           <Features />
+          <Gallery />
           <Testimonials />
           <Contact />
           <Footer />

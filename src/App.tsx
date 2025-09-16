@@ -4,6 +4,8 @@ import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Theme } from './types';
+import { sanitizeForLog } from './utils/security';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load components
 const CategorySelector = lazy(() => import('./components/CategorySelectorFixed'));
@@ -80,47 +82,49 @@ const App: React.FC = () => {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then((registration) => {
-            console.log('SW registered: ', registration);
+            console.log('SW registered: ', sanitizeForLog(String(registration)));
           })
           .catch((registrationError) => {
-            console.log('SW registration failed: ', registrationError);
+            console.log('SW registration failed: ', sanitizeForLog(String(registrationError)));
           });
       });
     }
   }, []);
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <Router>
-          <div className="App">
-            <Suspense fallback={<LoadingSpinner />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/shop" element={<ShopPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/admin" element={<AdminPage />} />
-              </Routes>
-            </Suspense>
-            
-            <Suspense fallback={null}>
-              <Toast />
-            </Suspense>
-            
-            <Suspense fallback={null}>
-              <WhatsAppButton />
-            </Suspense>
-            
-            <Suspense fallback={null}>
-              <PWAInstallPrompt />
-            </Suspense>
-          </div>
-        </Router>
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider>
+          <Router>
+            <div className="App">
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/admin" element={<AdminPage />} />
+                </Routes>
+              </Suspense>
+              
+              <Suspense fallback={null}>
+                <Toast />
+              </Suspense>
+              
+              <Suspense fallback={null}>
+                <WhatsAppButton />
+              </Suspense>
+              
+              <Suspense fallback={null}>
+                <PWAInstallPrompt />
+              </Suspense>
+            </div>
+          </Router>
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

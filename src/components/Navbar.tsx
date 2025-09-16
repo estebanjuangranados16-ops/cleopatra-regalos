@@ -6,9 +6,10 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useStore } from '../store/useStore';
 import { useAuth } from '../contexts/AuthContext';
 import Favorites from './Favorites';
+import FavoritesDropdown from './FavoritesDropdown';
 import UserProfile from './UserProfile';
 import NotificationSystem from './NotificationSystem';
-import AuthModal from './AuthModal';
+import { AuthModal } from './auth';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +23,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { colors } = useTheme();
-  const { getCartItemsCount, favorites } = useStore();
+  const { getCartItemsCount } = useStore();
   const { user, isAuthenticated, isAdmin } = useAuth();
   
   const isHomePage = location.pathname === '/';
@@ -46,7 +47,7 @@ const Navbar: React.FC = () => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-20 transition-all duration-300 ${
         scrolled ? 'bg-white/90 backdrop-blur-md shadow-lg' : 'bg-transparent'
       }`}
     >
@@ -105,23 +106,7 @@ const Navbar: React.FC = () => {
               
               {!isAdmin && (
                 <>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowFavorites(true)}
-                    className="relative p-2"
-                  >
-                    <Heart className={`w-5 h-5 ${
-                      scrolled ? 'text-gray-700' : 'text-white'
-                    }`} />
-                    {favorites.length > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center text-white font-bold"
-                        style={{ backgroundColor: colors.primary }}
-                      >
-                        {favorites.length}
-                      </span>
-                    )}
-                  </motion.button>
+                  <FavoritesDropdown />
                   
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -241,16 +226,9 @@ const Navbar: React.FC = () => {
             <div className="border-t mt-2 pt-2">
               {!isAdmin && (
                 <>
-                  <button
-                    onClick={() => {
-                      setShowFavorites(true);
-                      setIsOpen(false);
-                    }}
-                    className="flex items-center space-x-3 w-full px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    <Heart className="w-4 h-4" />
-                    <span>Favoritos ({favorites.length})</span>
-                  </button>
+                  <div className="px-4 py-2">
+                    <FavoritesDropdown />
+                  </div>
                   
                   <button
                     onClick={() => {

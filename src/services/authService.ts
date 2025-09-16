@@ -1,4 +1,5 @@
 import { User } from '../types/user';
+import { timingSafeEqual } from '../utils/security';
 
 class AuthService {
   private users: User[] = [];
@@ -35,7 +36,7 @@ class AuthService {
 
   async loginWithEmail(email: string, password: string): Promise<User> {
     // Credenciales específicas para admin
-    if (email === 'admin@cleopatra.com' && password === 'admin123') {
+    if (email === 'admin@cleopatra.com' && timingSafeEqual(password, 'admin123')) {
       let adminUser = this.users.find(u => u.email === email);
       if (!adminUser) {
         // Crear admin si no existe

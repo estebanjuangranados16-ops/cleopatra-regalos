@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Package, ShoppingCart, Heart, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -161,7 +162,9 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({ isOpen, onClose
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -302,7 +305,8 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({ isOpen, onClose
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

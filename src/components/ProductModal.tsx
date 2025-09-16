@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingCart, Heart, Star } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -24,7 +25,7 @@ const ProductModal: React.FC = () => {
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -136,7 +137,8 @@ const ProductModal: React.FC = () => {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

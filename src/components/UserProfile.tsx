@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Shield, ShoppingBag, Heart, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,7 +49,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
     { id: 'settings', label: 'Configuración', icon: Settings }
   ];
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -392,7 +395,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ isOpen, onClose }) => {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

@@ -10,7 +10,8 @@ import {
   ShoppingBag,
   ArrowLeft,
   Home,
-  LogOut
+  LogOut,
+  Video
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,8 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
 import ProductStats from './ProductStats';
+import VideoManager from './VideoManager';
 
-type AdminTab = 'dashboard' | 'products' | 'add' | 'edit';
+type AdminTab = 'dashboard' | 'products' | 'add' | 'edit' | 'videos';
 
 interface Product {
   id: string;
@@ -45,6 +47,7 @@ const AdminPanelPage: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'gifts' | 'tech'>('all');
+  const [showVideoManager, setShowVideoManager] = useState(false);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -105,6 +108,7 @@ const AdminPanelPage: React.FC = () => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, description: 'Resumen y estadísticas' },
     { id: 'products', label: 'Productos', icon: Package, description: 'Gestionar catálogo', count: products.length },
+    { id: 'videos', label: 'Videos', icon: Video, description: 'Gestionar galería' },
     { id: 'add', label: 'Agregar', icon: Plus, description: 'Nuevo producto' }
   ];
 
@@ -231,29 +235,44 @@ const AdminPanelPage: React.FC = () => {
                   <h2 className="text-lg lg:text-2xl font-bold text-gray-900">
                     {activeTab === 'dashboard' && 'Dashboard'}
                     {activeTab === 'products' && 'Productos'}
+                    {activeTab === 'videos' && 'Videos'}
                     {activeTab === 'add' && 'Agregar'}
                     {activeTab === 'edit' && 'Editar'}
                   </h2>
                   <p className="text-gray-600 mt-1 text-sm lg:text-base hidden lg:block">
                     {activeTab === 'dashboard' && 'Resumen general del sistema'}
                     {activeTab === 'products' && 'Administra tu catálogo de productos'}
+                    {activeTab === 'videos' && 'Gestiona la galería de videos'}
                     {activeTab === 'add' && 'Crear un nuevo producto'}
                     {activeTab === 'edit' && 'Modificar producto existente'}
                   </p>
                 </div>
               </div>
               
-              {activeTab === 'products' && (
-                <button
-                  onClick={() => setActiveTab('add')}
-                  className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity text-sm lg:text-base"
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  <Plus className="w-3 h-3 lg:w-4 lg:h-4" />
-                  <span className="hidden sm:inline">Nuevo Producto</span>
-                  <span className="sm:hidden">Nuevo</span>
-                </button>
-              )}
+              <div className="flex gap-2">
+                {activeTab === 'products' && (
+                  <button
+                    onClick={() => setActiveTab('add')}
+                    className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity text-sm lg:text-base"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    <Plus className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span className="hidden sm:inline">Nuevo Producto</span>
+                    <span className="sm:hidden">Nuevo</span>
+                  </button>
+                )}
+                {activeTab === 'videos' && (
+                  <button
+                    onClick={() => setShowVideoManager(true)}
+                    className="flex items-center gap-1 lg:gap-2 px-3 lg:px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity text-sm lg:text-base"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    <Video className="w-3 h-3 lg:w-4 lg:h-4" />
+                    <span className="hidden sm:inline">Gestionar Videos</span>
+                    <span className="sm:hidden">Videos</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Search and Filters for Products Tab */}
@@ -312,6 +331,31 @@ const AdminPanelPage: React.FC = () => {
                 </motion.div>
               )}
 
+              {activeTab === 'videos' && (
+                <motion.div
+                  key="videos"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="text-center py-12"
+                >
+                  <Video className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-xl font-bold mb-2" style={{ color: colors.secondary }}>
+                    Gestión de Videos
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Administra los videos de la galería desde aquí
+                  </p>
+                  <button
+                    onClick={() => setShowVideoManager(true)}
+                    className="px-6 py-3 rounded-lg text-white font-semibold"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    Abrir Gestor de Videos
+                  </button>
+                </motion.div>
+              )}
+
               {(activeTab === 'add' || activeTab === 'edit') && (
                 <motion.div
                   key={activeTab}
@@ -333,6 +377,11 @@ const AdminPanelPage: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <VideoManager 
+        isOpen={showVideoManager} 
+        onClose={() => setShowVideoManager(false)} 
+      />
     </div>
   );
 };

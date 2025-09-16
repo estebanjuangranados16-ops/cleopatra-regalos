@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause } from 'lucide-react';
+import { X, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { MediaItem } from '../services/galleryService';
 
 interface VideoModalProps {
@@ -13,6 +13,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, video }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     if (isOpen && video && videoRef.current) {
@@ -57,6 +58,14 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, video }) => {
     }
   };
 
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    
+    const newMutedState = !isMuted;
+    videoRef.current.muted = newMutedState;
+    setIsMuted(newMutedState);
+  };
+
   if (!video) return null;
 
   return (
@@ -76,13 +85,22 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, video }) => {
             className="relative w-full max-w-xs mx-auto h-[85vh] bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Botón cerrar */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-20 w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Controles superiores */}
+            <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
+              <button
+                onClick={toggleMute}
+                className="w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
+              >
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+              
+              <button
+                onClick={onClose}
+                className="w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
             {/* Loading */}
             {isLoading && (
@@ -96,7 +114,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, video }) => {
               ref={videoRef}
               className="w-full h-full object-cover"
               loop
-              muted
+              muted={isMuted}
               playsInline
               preload="metadata"
               onPlay={() => setIsPlaying(true)}

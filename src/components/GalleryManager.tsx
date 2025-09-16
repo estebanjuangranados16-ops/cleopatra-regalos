@@ -1,20 +1,32 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Video, Image, X, Play, Instagram } from 'lucide-react';
+import { Upload, Video, Image, X, Play, Instagram, HardDrive, Lock } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { MediaItem } from '../services/galleryService';
+import { hybridGalleryService } from '../services/hybridGalleryService';
+import InstagramVideoUploader from './InstagramVideoUploader';
 
 interface GalleryManagerProps {
   items: MediaItem[];
-  onAddItem: (item: Omit<MediaItem, 'id' | 'createdAt'>) => void;
+  onAddItem: (file: File, metadata: {
+    title: string;
+    description: string;
+    category: string;
+    badge: string;
+    isInstagramPost?: boolean;
+  }) => Promise<void>;
   onRemoveItem: (id: number) => void;
   onVideoClick?: (video: MediaItem) => void;
 }
 
 const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRemoveItem, onVideoClick }) => {
   const { colors } = useTheme();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploadType, setUploadType] = useState<'image' | 'video'>('image');
+  const [storageInfo, setStorageInfo] = useState({ used: 0, limit: 0, items: 0, percentage: 0 });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,20 +34,22 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
     badge: 'Nuevo',
     isInstagramPost: false
   });
+  const [showInstagramUploader, setShowInstagramUploader] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    setStorageInfo(hybridGalleryService.getStorageInfo());
+  }, [items]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Verificar tamaño del archivo (máximo 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('El archivo es demasiado grande. Máximo 10MB.');
-      return;
-    }
+    // Sin límite de tamaño - Cloudinary maneja archivos grandes
+    console.log(`Subiendo ${uploadType}: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const src = e.target?.result as string;
       
       // Para videos, crear un thumbnail simple
@@ -46,16 +60,15 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
       }
       
       try {
-        onAddItem({
-          type: uploadType,
-          src,
-          thumbnail,
+        await onAddItem(file, {
           title: formData.title || `${uploadType === 'video' ? 'Video' : 'Imagen'} ${Date.now()}`,
           description: formData.description || 'Contenido subido desde la galería',
           category: formData.category,
           badge: formData.badge,
           isInstagramPost: formData.isInstagramPost
         });
+        
+        setStorageInfo(hybridGalleryService.getStorageInfo());
 
         // Limpiar formulario
         setFormData({
@@ -72,7 +85,12 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
           fileInputRef.current.value = '';
         }
       } catch (error) {
-        alert('Error al subir el archivo: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        if (errorMessage.includes('quota') || errorMessage.includes('Quota')) {
+          alert('Espacio de almacenamiento lleno. Se eliminaron archivos antiguos para hacer espacio.');
+        } else {
+          alert('Error al subir el archivo: ' + errorMessage);
+        }
       }
     };
     
@@ -83,19 +101,71 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
     reader.readAsDataURL(file);
   };
 
+  if (!isAdmin) {
+    return (
+      <div className="text-center py-12 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl">
+        <Lock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+        <h3 className="text-xl font-bold mb-2" style={{ color: colors.secondary }}>
+          Acceso Restringido
+        </h3>
+        <p className="text-gray-600">
+          Solo los administradores pueden gestionar la galería
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Botón para agregar contenido */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setShowUploadForm(true)}
-        className="flex items-center gap-3 px-6 py-3 rounded-full text-white font-semibold shadow-lg"
-        style={{ backgroundColor: colors.primary }}
-      >
-        <Upload className="w-5 h-5" />
-        Agregar Contenido
-      </motion.button>
+      {/* Header con información de almacenamiento */}
+      <div className="flex justify-between items-center">
+        <div className="flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowUploadForm(true)}
+            className="flex items-center gap-3 px-6 py-3 rounded-full font-semibold shadow-lg text-white"
+            style={{ backgroundColor: colors.primary }}
+          >
+            <Upload className="w-5 h-5" />
+            Agregar Contenido
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowInstagramUploader(true)}
+
+            className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-colors shadow-lg disabled:opacity-50"
+          >
+            <Instagram className="w-5 h-5" />
+            Instagram
+          </motion.button>
+        </div>
+        
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 text-gray-600">
+            <HardDrive className="w-4 h-4" />
+            <span>{storageInfo.items} archivos (ilimitado)</span>
+          </div>
+          <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full transition-all duration-300"
+              style={{ 
+                width: `${storageInfo.percentage}%`,
+                backgroundColor: storageInfo.percentage > 80 ? '#ef4444' : colors.primary
+              }}
+            />
+          </div>
+          <span className="text-gray-600">{storageInfo.percentage}%</span>
+        </div>
+      </div>
+      
+      {storageInfo.percentage > 80 && (
+        <div className="p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-yellow-800 text-sm">
+          ⚠️ Espacio de almacenamiento casi lleno. Elimina algunos archivos para liberar espacio.
+        </div>
+      )}
 
       {/* Formulario de subida */}
       {showUploadForm && (
@@ -214,11 +284,33 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
                   <Image className="w-8 h-8" style={{ color: colors.primary }} />
                 )}
                 <span>Seleccionar {uploadType === 'video' ? 'video' : 'imagen'}</span>
-                <span className="text-sm text-gray-500">Máximo 10MB</span>
+                <span className="text-sm text-gray-500">
+                  Sin límite de tamaño
+                </span>
               </div>
             </button>
           </div>
         </motion.div>
+      )}
+
+      {/* Instagram Video Uploader Modal */}
+      {showInstagramUploader && (
+        <InstagramVideoUploader
+          onVideoUploaded={async (videoData) => {
+            const response = await fetch(videoData.url);
+            const blob = await response.blob();
+            const file = new File([blob], 'instagram-video.mp4', { type: 'video/mp4' });
+            
+            await onAddItem(file, {
+              title: videoData.title,
+              description: videoData.description,
+              category: 'Instagram',
+              badge: 'Reel',
+              isInstagramPost: true
+            });
+          }}
+          onClose={() => setShowInstagramUploader(false)}
+        />
       )}
 
       {/* Lista de contenido */}

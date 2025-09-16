@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Star, Heart, Sparkles, Play, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import GalleryManager from './GalleryManager';
 import VideoModal from './VideoModal';
-import { galleryService, MediaItem } from '../services/galleryService';
+import { hybridGalleryService, HybridMediaItem } from '../services/hybridGalleryService';
+import { MediaItem } from '../services/galleryService';
 
 // Componente ImageWithFallback
 const ImageWithFallback: React.FC<{
@@ -64,6 +66,9 @@ const galleryItems = [
 // Carrusel Hero
 const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, items }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -73,11 +78,38 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
     return () => clearInterval(interval);
   }, [items.length]);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5 }
+    );
+
+    if (carouselRef.current) {
+      observer.observe(carouselRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isVisible && items[currentSlide]?.type === 'video') {
+        videoRef.current.play();
+        videoRef.current.muted = false;
+      } else {
+        videoRef.current.pause();
+        videoRef.current.muted = true;
+      }
+    }
+  }, [isVisible, currentSlide, items]);
+
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % items.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + items.length) % items.length);
 
   return (
-    <div className="relative h-80 md:h-96 rounded-3xl overflow-hidden shadow-2xl mb-16">
+    <div ref={carouselRef} className="relative h-80 md:h-96 rounded-3xl overflow-hidden shadow-2xl mb-16">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -90,14 +122,18 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
           {items[currentSlide]?.type === 'video' ? (
             <div className="relative w-full h-full bg-black flex items-center justify-center">
               <video
+                ref={videoRef}
                 src={items[currentSlide].src}
                 className="h-full w-auto max-w-full object-contain"
                 controls
-                autoPlay
-                muted
                 loop
                 playsInline
                 poster={items[currentSlide].thumbnail}
+                muted={!isVisible}
+                onClick={(e) => {
+                  const video = e.target as HTMLVideoElement;
+                  video.muted = !video.muted;
+                }}
               />
             </div>
           ) : (
@@ -162,36 +198,170 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
   );
 };
 
-// Elementos flotantes de fondo
+// Partículas interactivas
+const InteractiveParticles: React.FC<{ colors: any }> = ({ colors }) => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+  
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(5)].map((_, i) => {
+        const distance = Math.sqrt(
+          Math.pow(mousePosition.x - (window.innerWidth * (0.2 + i * 0.2)), 2) +
+          Math.pow(mousePosition.y - (window.innerHeight * (0.3 + i * 0.15)), 2)
+        );
+        const scale = Math.max(0.5, 1 - distance / 500);
+        
+        return (
+          <motion.div
+            key={`interactive-${i}`}
+            className="absolute rounded-full"
+            style={{
+              width: '40px',
+              height: '40px',
+              left: `${20 + i * 20}%`,
+              top: `${30 + i * 15}%`,
+              background: `radial-gradient(circle, ${colors.primary}70, ${colors.primary}20 50%, transparent)`,
+              boxShadow: `0 0 30px ${colors.primary}60`,
+              transform: `scale(${scale})`,
+              transition: 'transform 0.3s ease-out'
+            }}
+            animate={{
+              scale: [scale * 0.8, scale * 1.2, scale * 0.8],
+              opacity: [0.6, 1, 0.6]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.5
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+// Elementos flotantes de fondo mejorados
 const FloatingElements: React.FC<{ colors: any }> = ({ colors }) => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(6)].map((_, i) => (
+      {/* Círculos grandes de fondo */}
+      {[...Array(4)].map((_, i) => (
         <motion.div
-          key={i}
+          key={`circle-${i}`}
+          className="absolute rounded-full"
+          style={{
+            width: `${200 + i * 50}px`,
+            height: `${200 + i * 50}px`,
+            left: `${20 + i * 25}%`,
+            top: `${10 + i * 20}%`,
+            background: `radial-gradient(circle, ${colors.primary}25, transparent 70%)`,
+            border: `2px solid ${colors.primary}40`
+          }}
+          animate={{
+            scale: [1, 1.1, 1],
+            rotate: [0, 180, 360],
+            opacity: [0.5, 0.9, 0.5]
+          }}
+          transition={{
+            duration: 15 + i * 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 2
+          }}
+        />
+      ))}
+      
+      {/* Círculos medianos flotantes */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={`medium-${i}`}
+          className="absolute rounded-full"
+          style={{
+            width: `${60 + i * 20}px`,
+            height: `${60 + i * 20}px`,
+            left: `${Math.random() * 90}%`,
+            top: `${Math.random() * 90}%`,
+            background: `linear-gradient(135deg, ${colors.primary}30, ${colors.accent}25)`,
+            backdropFilter: 'blur(1px)'
+          }}
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -80, 0],
+            scale: [0.8, 1.2, 0.8],
+            opacity: [0.4, 0.8, 0.4]
+          }}
+          transition={{
+            duration: 12 + i * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 1.5
+          }}
+        />
+      ))}
+      
+      {/* Partículas pequeñas brillantes */}
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
           className="absolute"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
           }}
           animate={{
-            x: [0, 50, 0],
-            y: [0, -30, 0],
+            x: [0, 60, 0],
+            y: [0, -40, 0],
             rotate: [0, 360],
-            scale: [1, 1.2, 1]
+            scale: [1, 1.5, 1]
           }}
           transition={{
-            duration: 8 + i * 2,
+            duration: 8 + i * 1.5,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: i * 0.5
+            delay: i * 0.8
           }}
         >
-          {i % 3 === 0 && <Star className="w-4 h-4 opacity-20" style={{ color: colors.primary }} />}
-          {i % 3 === 1 && <Heart className="w-3 h-3 opacity-15" style={{ color: colors.accent }} />}
-          {i % 3 === 2 && <Sparkles className="w-5 h-5 opacity-10" style={{ color: colors.primaryDark }} />}
+          {i % 4 === 0 && (
+            <div 
+              className="w-2 h-2 rounded-full" 
+              style={{ 
+                background: `radial-gradient(circle, ${colors.primary}, transparent)`,
+                boxShadow: `0 0 20px ${colors.primary}80`
+              }} 
+            />
+          )}
+          {i % 4 === 1 && <Star className="w-4 h-4 opacity-60" style={{ color: colors.primary }} />}
+          {i % 4 === 2 && <Heart className="w-3 h-3 opacity-50" style={{ color: colors.accent }} />}
+          {i % 4 === 3 && <Sparkles className="w-5 h-5 opacity-45" style={{ color: colors.primaryDark }} />}
         </motion.div>
       ))}
+      
+      {/* Ondas de fondo */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse at 20% 80%, ${colors.primary}15 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, ${colors.accent}15 0%, transparent 50%)`
+        }}
+        animate={{
+          opacity: [0.6, 0.9, 0.6]
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
     </div>
   );
 };
@@ -201,29 +371,41 @@ const FloatingElements: React.FC<{ colors: any }> = ({ colors }) => {
 // Componente principal Gallery
 const Gallery: React.FC = () => {
   const { colors } = useTheme();
+  const { user } = useAuth();
   const [showManager, setShowManager] = useState(false);
-  const [galleryItems, setGalleryItems] = useState<MediaItem[]>([]);
+  const isAdmin = user?.role === 'admin';
+  const [galleryItems, setGalleryItems] = useState<HybridMediaItem[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<MediaItem | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
   // Cargar items al montar el componente
   useEffect(() => {
-    const items = galleryService.getItems();
+    const items = hybridGalleryService.getItems();
     setGalleryItems(items);
   }, []);
 
-  const addItem = (item: Omit<MediaItem, 'id' | 'createdAt'>) => {
+  const addItem = async (file: File, metadata: {
+    title: string;
+    description: string;
+    category: string;
+    badge: string;
+    isInstagramPost?: boolean;
+  }) => {
     try {
-      const newItem = galleryService.addItem(item);
+      const newItem = await hybridGalleryService.addItem(file, metadata);
       setGalleryItems(prev => [...prev, newItem]);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al guardar el archivo');
     }
   };
 
-  const removeItem = (id: number) => {
-    galleryService.removeItem(id);
-    setGalleryItems(prev => prev.filter(item => item.id !== id));
+  const removeItem = async (id: number) => {
+    try {
+      await hybridGalleryService.removeItem(id);
+      setGalleryItems(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Error al eliminar el archivo');
+    }
   };
 
   const handleVideoClick = (video: MediaItem) => {
@@ -237,8 +419,9 @@ const Gallery: React.FC = () => {
   };
 
   return (
-    <section id="gallery" className="relative py-20 overflow-hidden">
+    <section id="gallery" className="relative py-20 overflow-hidden bg-gradient-to-br from-gray-100 via-white to-blue-50">
       <FloatingElements colors={colors} />
+      <InteractiveParticles colors={colors} />
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -257,25 +440,31 @@ const Gallery: React.FC = () => {
                 Descubre la magia de Cleopatra a través de nuestros productos únicos y momentos inolvidables
               </p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowManager(!showManager)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-semibold shadow-lg"
-              style={{ backgroundColor: colors.accent }}
-            >
-              <Settings className="w-4 h-4" />
-              Gestionar
-            </motion.button>
+            {isAdmin && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowManager(!showManager)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-semibold shadow-lg"
+                style={{ backgroundColor: colors.accent }}
+              >
+                <Settings className="w-4 h-4" />
+                Gestionar
+              </motion.button>
+            )}
           </div>
         </motion.div>
 
         {showManager && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-16 bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl"
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            className="mb-16 bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20"
+            style={{
+              background: `linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4))`,
+              boxShadow: `0 25px 50px -12px ${colors.primary}20`
+            }}
           >
             <GalleryManager
               items={galleryItems}
@@ -290,9 +479,13 @@ const Gallery: React.FC = () => {
           <HeroCarousel colors={colors} items={galleryItems} />
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl mb-16"
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="text-center py-20 bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl mb-16 border border-white/20"
+            style={{
+              background: `linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6))`,
+              boxShadow: `0 25px 50px -12px ${colors.primary}15`
+            }}
           >
             <div className="text-6xl mb-4">📸</div>
             <h3 className="text-2xl font-bold mb-4" style={{ color: colors.secondary }}>
@@ -328,10 +521,11 @@ const Gallery: React.FC = () => {
                 className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center lg:grid-flow-col-dense"
               >
                 <motion.div
-                  initial={{ opacity: 0, x: isReversed ? 60 : -60 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
+                  initial={{ opacity: 0, x: isReversed ? 60 : -60, scale: 0.9 }}
+                  whileInView={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 0.4, type: "spring", stiffness: 100 }}
                   viewport={{ once: true }}
+                  whileHover={{ y: -10 }}
                   className={`group relative ${isReversed ? 'lg:col-start-2' : ''}`}
                 >
                   <div className="relative overflow-hidden rounded-3xl shadow-2xl">
@@ -344,13 +538,28 @@ const Gallery: React.FC = () => {
                         <video
                           src={item.src}
                           className="w-full h-full object-cover"
-                          autoPlay
                           loop
                           muted
                           playsInline
                           poster={item.thumbnail}
+                          ref={(video) => {
+                            if (video) {
+                              const observer = new IntersectionObserver(
+                                ([entry]) => {
+                                  if (entry.isIntersecting) {
+                                    video.play();
+                                    video.muted = false;
+                                  } else {
+                                    video.pause();
+                                    video.muted = true;
+                                  }
+                                },
+                                { threshold: 0.5 }
+                              );
+                              observer.observe(video);
+                            }
+                          }}
                           onError={(e) => {
-                            // Si falla el video, mostrar thumbnail
                             const video = e.target as HTMLVideoElement;
                             video.style.display = 'none';
                             const img = document.createElement('img');
@@ -416,9 +625,9 @@ const Gallery: React.FC = () => {
                 </motion.div>
 
                 <motion.div
-                  initial={{ opacity: 0, x: isReversed ? -60 : 60 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, delay: 0.6 }}
+                  initial={{ opacity: 0, x: isReversed ? -60 : 60, y: 30 }}
+                  whileInView={{ opacity: 1, x: 0, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6, type: "spring", stiffness: 80 }}
                   viewport={{ once: true }}
                   className={`space-y-6 ${isReversed ? 'lg:col-start-1' : ''}`}
                 >
@@ -474,9 +683,10 @@ const Gallery: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mt-20 p-12 rounded-3xl shadow-2xl bg-white/90 backdrop-blur-sm border"
+          className="text-center mt-20 p-12 rounded-3xl shadow-2xl bg-white/70 backdrop-blur-xl border border-white/30"
           style={{ 
-            borderColor: colors.primary
+            background: `linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6))`,
+            boxShadow: `0 25px 50px -12px ${colors.primary}20, inset 0 1px 0 rgba(255,255,255,0.6)`
           }}
         >
           <h3 className="text-3xl font-bold mb-6" style={{ color: colors.secondary }}>

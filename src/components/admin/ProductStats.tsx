@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Package, TrendingUp, ShoppingCart, Star, Calendar, DollarSign } from 'lucide-react';
+import { escapeHtml } from '../../utils/security';
 
 interface Product {
   id: string;
@@ -220,7 +221,7 @@ const ProductStats: React.FC<ProductStatsProps> = ({ products }) => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate" dangerouslySetInnerHTML={{ __html: escapeHtml(product.name) }}></p>
                     <p className="text-xs text-gray-500 capitalize">{product.category === 'tech' ? 'Tecnología' : 'Regalos'}</p>
                   </div>
                   <div className="text-sm font-semibold text-green-600">
@@ -256,7 +257,7 @@ const ProductStats: React.FC<ProductStatsProps> = ({ products }) => {
                   alt={product.name}
                   className="w-full h-32 object-cover rounded-lg mb-3"
                 />
-                <h4 className="font-medium text-gray-900 mb-1 truncate">{product.name}</h4>
+                <h4 className="font-medium text-gray-900 mb-1 truncate" dangerouslySetInnerHTML={{ __html: escapeHtml(product.name) }}></h4>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-green-600 font-semibold">
                     {typeof product.price === 'string' ? product.price : `$${product.price.toLocaleString()}`}

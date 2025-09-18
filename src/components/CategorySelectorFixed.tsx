@@ -18,7 +18,10 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
 
   const handleSelect = (category: Theme) => {
     setTheme(category);
-    onSelect(category);
+    // Animación de salida más suave
+    setTimeout(() => {
+      onSelect(category);
+    }, 800); // Dar tiempo para que se vea la animación de selección
   };
 
   const handleNavigation = (path: string) => {
@@ -26,7 +29,18 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#001F3F] to-[#1E293B] relative overflow-hidden">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-b from-[#001F3F] to-[#1E293B] relative overflow-hidden"
+      exit={{ 
+        opacity: 0,
+        scale: 0.95,
+        y: -50,
+        transition: { 
+          duration: 0.8,
+          ease: "easeInOut"
+        }
+      }}
+    >
       {/* Animated Particles Background */}
       <AnimatedParticles />
       
@@ -327,73 +341,146 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
         </motion.div>
 
         {/* Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl w-full">
+        <div className="grid md:grid-cols-2 gap-10 max-w-6xl w-full">
           {/* Technology Card */}
           <motion.div
-            initial={{ x: -150, opacity: 0, rotateY: -45 }}
-            animate={{ x: 0, opacity: 1, rotateY: 0 }}
+            initial={{ x: -50, opacity: 0, scale: 0.95 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
             transition={{ 
-              delay: 1.3,
-              duration: 1,
+              delay: 0.2,
+              duration: 0.3,
               type: "spring",
-              stiffness: 80
+              stiffness: 200
             }}
             whileHover={{ 
-              scale: 1.03,
-              y: -8,
-              rotateY: 5,
-              boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)",
-              transition: { duration: 0.3 }
+              scale: 1.05,
+              y: -12,
+              rotateY: 3,
+              boxShadow: "0 25px 50px rgba(37, 99, 235, 0.4)",
+              transition: { 
+                duration: 0.4,
+                type: "spring",
+                stiffness: 300
+              }
             }}
-            whileTap={{ scale: 0.97 }}
-            className="rounded-xl shadow-lg p-8 cursor-pointer transition-all duration-300 hover:shadow-xl transform-gpu"
-            style={{ backgroundColor: colors.primaryLight }}
+            whileTap={{ scale: 0.98 }}
+            className="relative rounded-2xl shadow-2xl p-10 cursor-pointer transition-all duration-500 hover:shadow-3xl transform-gpu overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 50%, #F0F9FF 100%)`,
+              border: '2px solid rgba(37, 99, 235, 0.1)'
+            }}
             onClick={() => handleSelect('tech')}
           >
-            <div className="text-center">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 1.5, duration: 0.8, type: "spring" }}
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, -10, 10, 0],
-                  transition: { duration: 0.6 }
-                }}
-              >
-                <Smartphone className="w-16 h-16 mx-auto mb-6" style={{ color: colors.primary }} />
-              </motion.div>
-              <h3 className="text-2xl font-bold mb-2" style={{ color: colors.primaryDark }}>Tecnología</h3>
-              <p className="text-gray-600 mb-4">Innovación y modernidad</p>
-              <p className="text-gray-500 text-sm mb-6">
-                Descubre los últimos gadgets, smartphones, accesorios tech y más
-              </p>
-              
-              {/* List */}
-              <ul className="text-left space-y-2 mb-8">
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Smartphones
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Smartwatches
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Auriculares
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Accesorios Tech
-                </li>
-              </ul>
+            {/* Gradient overlay */}
+            <motion.div 
+              className="absolute inset-0 opacity-0"
+              whileHover={{ opacity: 0.1 }}
+              transition={{ duration: 0.3 }}
+              style={{ 
+                background: `linear-gradient(135deg, #2563EB, #3B82F6)` 
+              }}
+            />
+            
+            <div className="relative z-10 flex flex-col h-full">
+              {/* Logo y icono combinados */}
+              <div className="flex items-center justify-center mb-4 space-x-4">
+                {/* Logo de marca */}
+                <motion.img
+                  src="/assets/brand/logos/cleopatra-logo-blue.png"
+                  alt="Cleopatra Tech"
+                  className="w-16 h-16 object-contain"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ 
+                    delay: 0.4, 
+                    duration: 0.2,
+                    type: "spring",
+                    stiffness: 200
+                  }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    transition: { duration: 0.2 }
+                  }}
+                />
+                
+                {/* Icono temático */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.5, duration: 0.2, type: "spring", stiffness: 200 }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  <Smartphone className="w-12 h-12" style={{ color: '#2563EB' }} />
+                </motion.div>
+              </div>
+              {/* Contenido central */}
+              <div className="flex-1 flex flex-col justify-center text-center">
+                <motion.h3 
+                  className="text-3xl font-bold mb-2"
+                  style={{ color: '#1E40AF' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.2 }}
+                >
+                  Tecnología
+                </motion.h3>
+                <motion.p 
+                  className="text-blue-600 mb-3 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.2 }}
+                >
+                  Innovación y modernidad
+                </motion.p>
+                <motion.p 
+                  className="text-gray-600 text-sm mb-4 leading-relaxed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8, duration: 0.2 }}
+                >
+                  Descubre los últimos gadgets, smartphones, accesorios tech y más
+                </motion.p>
+                
+                {/* List */}
+                <motion.ul 
+                  className="text-left space-y-2 mb-4 mx-auto max-w-xs"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.2 }}
+                >
+                  {['Smartphones', 'Smartwatches', 'Auriculares', 'Accesorios Tech'].map((item, index) => (
+                    <motion.li 
+                      key={item}
+                      className="flex items-center text-gray-700 font-medium text-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.0 + index * 0.02, duration: 0.1 }}
+                    >
+                      <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: '#2563EB' }} />
+                      {item}
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </div>
 
+              {/* Botón en la parte inferior */}
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-                style={{ backgroundColor: colors.primary }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.1, duration: 0.2 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 8px 20px rgba(37, 99, 235, 0.3)"
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg mt-auto"
+                style={{ 
+                  background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
+                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.2)'
+                }}
               >
                 Explorar Tecnología
               </motion.button>
@@ -402,70 +489,143 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
 
           {/* Gifts Card */}
           <motion.div
-            initial={{ x: 150, opacity: 0, rotateY: 45 }}
-            animate={{ x: 0, opacity: 1, rotateY: 0 }}
+            initial={{ x: 50, opacity: 0, scale: 0.95 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
             transition={{ 
-              delay: 1.3,
-              duration: 1,
+              delay: 0.3,
+              duration: 0.3,
               type: "spring",
-              stiffness: 80
+              stiffness: 200
             }}
             whileHover={{ 
-              scale: 1.03,
-              y: -8,
-              rotateY: -5,
-              boxShadow: "0 20px 40px rgba(245, 158, 11, 0.3)",
-              transition: { duration: 0.3 }
+              scale: 1.05,
+              y: -12,
+              rotateY: -3,
+              boxShadow: "0 25px 50px rgba(245, 158, 11, 0.4)",
+              transition: { 
+                duration: 0.4,
+                type: "spring",
+                stiffness: 300
+              }
             }}
-            whileTap={{ scale: 0.97 }}
-            className="rounded-xl shadow-lg p-8 cursor-pointer transition-all duration-300 hover:shadow-xl transform-gpu"
-            style={{ backgroundColor: colors.primaryLight }}
+            whileTap={{ scale: 0.98 }}
+            className="relative rounded-2xl shadow-2xl p-10 cursor-pointer transition-all duration-500 hover:shadow-3xl transform-gpu overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 50%, #FEFCE8 100%)`,
+              border: '2px solid rgba(245, 158, 11, 0.1)'
+            }}
             onClick={() => handleSelect('gifts')}
           >
-            <div className="text-center">
-              <motion.div
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 1.5, duration: 0.8, type: "spring" }}
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, 10, -10, 0],
-                  transition: { duration: 0.6 }
-                }}
-              >
-                <Gift className="w-16 h-16 mx-auto mb-6" style={{ color: colors.primary }} />
-              </motion.div>
-              <h3 className="text-2xl font-bold mb-2" style={{ color: colors.primaryDark }}>Regalos</h3>
-              <p className="text-gray-600 mb-4">Momentos especiales</p>
-              <p className="text-gray-500 text-sm mb-6">
-                Encuentra el regalo perfecto para esa persona especial
-              </p>
-              
-              {/* List */}
-              <ul className="text-left space-y-2 mb-8">
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Peluches
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Canastas
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Desayunos
-                </li>
-                <li className="flex items-center text-gray-600">
-                  <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.primary }}></div>
-                  Detalles Únicos
-                </li>
-              </ul>
+            {/* Gradient overlay */}
+            <motion.div 
+              className="absolute inset-0 opacity-0"
+              whileHover={{ opacity: 0.1 }}
+              transition={{ duration: 0.3 }}
+              style={{ 
+                background: `linear-gradient(135deg, #F59E0B, #FBBF24)` 
+              }}
+            />
+            
+            <div className="relative z-10 flex flex-col h-full">
+              {/* Logo y icono combinados */}
+              <div className="flex items-center justify-center mb-4 space-x-4">
+                {/* Logo de marca */}
+                <motion.img
+                  src="/assets/brand/logos/cleopatra-logo-gold.png"
+                  alt="Cleopatra Regalos"
+                  className="w-16 h-16 object-contain"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ 
+                    delay: 0.5, 
+                    duration: 0.2,
+                    type: "spring",
+                    stiffness: 200
+                  }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    transition: { duration: 0.2 }
+                  }}
+                />
+                
+                {/* Icono temático */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.6, duration: 0.2, type: "spring", stiffness: 200 }}
+                  whileHover={{ 
+                    scale: 1.1,
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  <Gift className="w-12 h-12" style={{ color: '#F59E0B' }} />
+                </motion.div>
+              </div>
+              {/* Contenido central */}
+              <div className="flex-1 flex flex-col justify-center text-center">
+                <motion.h3 
+                  className="text-3xl font-bold mb-2"
+                  style={{ color: '#D97706' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.2 }}
+                >
+                  Regalos
+                </motion.h3>
+                <motion.p 
+                  className="text-amber-600 mb-3 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8, duration: 0.2 }}
+                >
+                  Momentos especiales
+                </motion.p>
+                <motion.p 
+                  className="text-gray-600 text-sm mb-4 leading-relaxed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9, duration: 0.2 }}
+                >
+                  Encuentra el regalo perfecto para esa persona especial
+                </motion.p>
+                
+                {/* List */}
+                <motion.ul 
+                  className="text-left space-y-2 mb-4 mx-auto max-w-xs"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.0, duration: 0.2 }}
+                >
+                  {['Peluches', 'Canastas', 'Desayunos', 'Detalles Únicos'].map((item, index) => (
+                    <motion.li 
+                      key={item}
+                      className="flex items-center text-gray-700 font-medium text-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.1 + index * 0.02, duration: 0.1 }}
+                    >
+                      <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: '#F59E0B' }} />
+                      {item}
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </div>
 
+              {/* Botón en la parte inferior */}
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-                style={{ backgroundColor: colors.primary }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, duration: 0.2 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 8px 20px rgba(245, 158, 11, 0.3)"
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg mt-auto"
+                style={{ 
+                  background: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
+                  boxShadow: '0 4px 15px rgba(245, 158, 11, 0.2)'
+                }}
               >
                 Explorar Regalos
               </motion.button>
@@ -501,7 +661,7 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
           <HelpCircle className="w-8 h-8 text-gray-400 cursor-pointer hover:text-gray-300 transition-colors" />
         </motion.div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

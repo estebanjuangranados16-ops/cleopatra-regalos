@@ -22,6 +22,7 @@ const Footer = lazy(() => import('./components/Footer'));
 const Toast = lazy(() => import('./components/Toast'));
 const WhatsAppButton = lazy(() => import('./components/WhatsAppButton'));
 const PWAInstallPrompt = lazy(() => import('./components/PWAInstallPrompt'));
+const ThemeToggleButton = lazy(() => import('./components/ThemeToggleButton'));
 const AdminRoute = lazy(() => import('./components/AdminRoute'));
 
 // Pages
@@ -41,9 +42,14 @@ const LoadingSpinner = () => (
 
 // Home component
 const HomePage: React.FC = () => {
-  const [showCategorySelector, setShowCategorySelector] = useState(true);
+  const [showCategorySelector, setShowCategorySelector] = useState(() => {
+    // Solo mostrar si no se ha seleccionado en esta sesión (refresh)
+    return !sessionStorage.getItem('cleopatra-theme-selected');
+  });
 
   const handleCategorySelect = (category: Theme) => {
+    // Guardar que ya se seleccionó en esta sesión
+    sessionStorage.setItem('cleopatra-theme-selected', 'true');
     setTimeout(() => {
       setShowCategorySelector(false);
     }, 500);
@@ -115,6 +121,10 @@ const App: React.FC = () => {
               
               <Suspense fallback={null}>
                 <WhatsAppButton />
+              </Suspense>
+              
+              <Suspense fallback={null}>
+                <ThemeToggleButton />
               </Suspense>
               
               <Suspense fallback={null}>

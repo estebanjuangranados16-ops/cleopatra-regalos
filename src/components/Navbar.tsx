@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Crown, ShoppingCart, Heart, LogIn, Plus, Bell } from 'lucide-react';
+import { Menu, X, Crown, ShoppingCart, Heart, LogIn, Plus, Bell, Smartphone, Gift } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStore } from '../store/useStore';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,7 +22,7 @@ const Navbar: React.FC = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { colors } = useTheme();
+  const { colors, theme, setTheme } = useTheme();
   const { getCartItemsCount } = useStore();
   const { user, isAuthenticated, isAdmin } = useAuth();
   
@@ -58,12 +58,23 @@ const Navbar: React.FC = () => {
             className="flex items-center space-x-2 cursor-pointer"
             onClick={() => navigate('/')}
           >
+            <img 
+              src={`/assets/brand/logos/cleopatra-logo-${colors.primary === '#FFD300' ? 'gold' : 'blue'}.png`}
+              alt="Cleopatra Regalos Logo"
+              className="w-12 h-12 object-contain"
+              onError={(e) => {
+                // Fallback to crown icon if logo fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
             <Crown 
-              className="w-8 h-8" 
+              className="w-12 h-12 hidden" 
               style={{ color: colors.primary }}
             />
             <span 
-              className="text-xl font-bold"
+              className="text-2xl font-bold"
               style={{ color: scrolled ? colors.secondary : 'white' }}
             >
               Cleopatra
@@ -86,6 +97,31 @@ const Navbar: React.FC = () => {
             ))}
             
             <div className="flex items-center space-x-4">
+              {/* Botón de cambio de tema */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTheme(theme === 'tech' ? 'gifts' : 'tech')}
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border"
+                style={{ 
+                  backgroundColor: scrolled ? colors.primaryLight : 'rgba(255,255,255,0.1)',
+                  borderColor: scrolled ? colors.primary : 'rgba(255,255,255,0.3)',
+                  color: scrolled ? colors.primary : 'white'
+                }}
+              >
+                {theme === 'tech' ? (
+                  <>
+                    <Gift className="w-3 h-3" />
+                    <span>Regalos</span>
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="w-3 h-3" />
+                    <span>Tech</span>
+                  </>
+                )}
+              </motion.button>
+              
               {isAuthenticated && (
                 <motion.button
                   whileHover={{ scale: 1.1 }}
@@ -224,6 +260,27 @@ const Navbar: React.FC = () => {
             ))}
             
             <div className="border-t mt-2 pt-2">
+              {/* Botón de cambio de tema móvil */}
+              <button
+                onClick={() => {
+                  setTheme(theme === 'tech' ? 'gifts' : 'tech');
+                  setIsOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                {theme === 'tech' ? (
+                  <>
+                    <Gift className="w-4 h-4" />
+                    <span>Cambiar a Regalos</span>
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="w-4 h-4" />
+                    <span>Cambiar a Tecnología</span>
+                  </>
+                )}
+              </button>
+              
               {!isAdmin && (
                 <>
                   <div className="px-4 py-2">

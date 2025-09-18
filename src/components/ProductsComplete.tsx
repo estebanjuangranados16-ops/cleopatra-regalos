@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStore } from '../store/useStore';
 import { useFavoritesStore } from '../store/favoritesStore';
 import { Product } from '../types';
-import { products as fallbackProducts } from '../utils/constants';
 import AdminPanel from './admin/AdminPanel';
 
 const ProductsComplete: React.FC = () => {
@@ -26,16 +25,26 @@ const ProductsComplete: React.FC = () => {
     try {
       const { productService } = await import('../services/productService');
       const data = await productService.getProducts();
+      console.log('Products loaded from Firebase:', data);
+      console.log('Number of products:', data.length);
       
-      if (data.length === 0) {
-        // Si no hay productos en Firebase, usar los de fallback
-        setProducts(fallbackProducts);
-      } else {
-        setProducts(data);
-      }
+      // Verificar formato de productos
+      data.forEach((product, index) => {
+        console.log(`Product ${index}:`, {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          images: product.images,
+          category: product.category,
+          description: product.description
+        });
+      });
+      
+      setProducts(data);
     } catch (error) {
       console.error('Error loading products:', error);
-      setProducts(fallbackProducts);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -46,6 +55,8 @@ const ProductsComplete: React.FC = () => {
   }, []);
 
   const displayProducts = products.slice(0, 6);
+  console.log('Display products:', displayProducts);
+  console.log('All products state:', products);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -118,6 +129,10 @@ const ProductsComplete: React.FC = () => {
         </div>
 
         {displayProducts.length > 0 ? (
+          <>
+            <div className="mb-4 text-center text-sm text-gray-500">
+              Mostrando {displayProducts.length} de {products.length} productos
+            </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {displayProducts.map((product, index) => (
               <motion.div
@@ -208,6 +223,7 @@ const ProductsComplete: React.FC = () => {
               </motion.div>
             ))}
           </div>
+          </>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 30 }}

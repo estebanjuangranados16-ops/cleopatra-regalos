@@ -97,7 +97,7 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
     if (videoRef.current) {
       if (isVisible && items[currentSlide]?.type === 'video') {
         videoRef.current.play();
-        videoRef.current.muted = false;
+        videoRef.current.muted = true; // Carrusel siempre silenciado
       } else {
         videoRef.current.pause();
         videoRef.current.muted = true;
@@ -129,10 +129,10 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
                 loop
                 playsInline
                 poster={items[currentSlide].thumbnail}
-                muted={!isVisible}
+                muted={true}
                 onClick={(e) => {
-                  const video = e.target as HTMLVideoElement;
-                  video.muted = !video.muted;
+                  // Carrusel siempre silenciado
+                  e.preventDefault();
                 }}
               />
             </div>
@@ -548,7 +548,7 @@ const Gallery: React.FC = () => {
                                 ([entry]) => {
                                   if (entry.isIntersecting) {
                                     video.play();
-                                    video.muted = false;
+                                    video.muted = false; // Videos individuales CON audio
                                   } else {
                                     video.pause();
                                     video.muted = true;

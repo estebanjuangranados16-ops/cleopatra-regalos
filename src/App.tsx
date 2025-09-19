@@ -1,11 +1,14 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Theme } from './types';
 import { sanitizeForLog } from './utils/security';
+import { measureWebVitals, optimizeWebVitals, observePerformance } from './utils/webVitals';
 import ErrorBoundary from './components/ErrorBoundary';
+import SEOHead from './components/SEOHead';
 // Componentes críticos - no lazy
 import Toast from './components/Toast';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -84,6 +87,15 @@ const HomePage: React.FC = () => {
 
 const App: React.FC = () => {
   React.useEffect(() => {
+    // Optimizaciones de performance
+    optimizeWebVitals();
+    
+    // Medir Web Vitals
+    measureWebVitals();
+    
+    // Observar performance
+    observePerformance();
+    
     // Registrar Service Worker para PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -100,30 +112,33 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ThemeProvider>
-          <Router>
-            <div className="App">
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/shop" element={<ShopPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/cart" element={<CartPage />} />
-                  <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/admin" element={<AdminPage />} />
-                </Routes>
-              </Suspense>
-              
-              <Toast />
-              <WhatsAppButton />
-              <ThemeToggleButton />
-              <PWAInstallPrompt />
-            </div>
-          </Router>
-        </ThemeProvider>
-      </AuthProvider>
+      <HelmetProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <Router>
+              <div className="App">
+                <SEOHead />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/shop" element={<ShopPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/admin" element={<AdminPage />} />
+                  </Routes>
+                </Suspense>
+                
+                <Toast />
+                <WhatsAppButton />
+                <ThemeToggleButton />
+                <PWAInstallPrompt />
+              </div>
+            </Router>
+          </ThemeProvider>
+        </AuthProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 };

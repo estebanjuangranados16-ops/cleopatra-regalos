@@ -5,7 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryManager from './GalleryManager';
 import VideoModal from './VideoModal';
-import { hybridGalleryService, HybridMediaItem } from '../services/hybridGalleryService';
+import { firestoreGalleryService, FirestoreMediaItem } from '../services/firestoreGalleryService';
 import { MediaItem } from '../services/galleryService';
 
 // Componente ImageWithFallback
@@ -27,44 +27,10 @@ const ImageWithFallback: React.FC<{
   );
 };
 
-// Datos de la galería
-const galleryItems = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80',
-    title: 'Smartwatch Collection 2024',
-    description: 'Los mejores smartwatches del mercado con tecnología de punta para estar siempre conectado.',
-    category: 'Tecnología',
-    badge: 'Nuevo'
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
-    title: 'Canasta Desayuno Sorpresa',
-    description: 'Sorprende a esa persona especial con nuestras canastas gourmet llenas de amor y detalles únicos.',
-    category: 'Regalos',
-    badge: 'Popular'
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&q=80',
-    title: 'Peluches Gigantes',
-    description: 'Los peluches más tiernos y suaves, perfectos para regalar amor y ternura en cualquier ocasión.',
-    category: 'Regalos',
-    badge: 'Favorito'
-  },
-  {
-    id: 4,
-    image: 'https://images.unseller.com/photo-1573408301185-9146fe634ad0?w=800&q=80',
-    title: 'Auriculares Premium',
-    description: 'Sonido de alta calidad con tecnología inalámbrica avanzada para una experiencia auditiva única.',
-    category: 'Tecnología',
-    badge: 'Premium'
-  }
-];
+// Los datos ahora vienen de Firestore - no hay datos hardcodeados
 
 // Carrusel Hero
-const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, items }) => {
+const HeroCarousel: React.FC<{ colors: any; items: FirestoreMediaItem[] }> = ({ colors, items }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -95,12 +61,15 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
 
   useEffect(() => {
     if (videoRef.current) {
+      const video = videoRef.current;
+      video.muted = true; // Siempre silenciado en carrusel
+      
       if (isVisible && items[currentSlide]?.type === 'video') {
-        videoRef.current.play();
-        videoRef.current.muted = true; // Carrusel siempre silenciado
+        video.play().catch(() => {
+          console.log('Carousel video autoplay blocked');
+        });
       } else {
-        videoRef.current.pause();
-        videoRef.current.muted = true;
+        video.pause();
       }
     }
   }, [isVisible, currentSlide, items]);
@@ -130,9 +99,11 @@ const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, i
                 playsInline
                 poster={items[currentSlide].thumbnail}
                 muted={true}
-                onClick={(e) => {
-                  // Carrusel siempre silenciado
-                  e.preventDefault();
+                onLoadedData={() => {
+                  // Asegurar que esté silenciado al cargar
+                  if (videoRef.current) {
+                    videoRef.current.muted = true;
+                  }
                 }}
               />
             </div>
@@ -213,40 +184,30 @@ const InteractiveParticles: React.FC<{ colors: any }> = ({ colors }) => {
   
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(5)].map((_, i) => {
-        const distance = Math.sqrt(
-          Math.pow(mousePosition.x - (window.innerWidth * (0.2 + i * 0.2)), 2) +
-          Math.pow(mousePosition.y - (window.innerHeight * (0.3 + i * 0.15)), 2)
-        );
-        const scale = Math.max(0.5, 1 - distance / 500);
-        
-        return (
-          <motion.div
-            key={`interactive-${i}`}
-            className="absolute rounded-full"
-            style={{
-              width: '40px',
-              height: '40px',
-              left: `${20 + i * 20}%`,
-              top: `${30 + i * 15}%`,
-              background: `radial-gradient(circle, ${colors.primary}70, ${colors.primary}20 50%, transparent)`,
-              boxShadow: `0 0 30px ${colors.primary}60`,
-              transform: `scale(${scale})`,
-              transition: 'transform 0.3s ease-out'
-            }}
-            animate={{
-              scale: [scale * 0.8, scale * 1.2, scale * 0.8],
-              opacity: [0.6, 1, 0.6]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.5
-            }}
-          />
-        );
-      })}
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+          key={`interactive-${i}`}
+          className="absolute rounded-full"
+          style={{
+            width: '30px',
+            height: '30px',
+            left: `${25 + i * 25}%`,
+            top: `${35 + i * 15}%`,
+            background: `radial-gradient(circle, ${colors.primary}50, transparent)`,
+            boxShadow: `0 0 20px ${colors.primary}40`,
+          }}
+          animate={{
+            scale: [0.8, 1.1, 0.8],
+            opacity: [0.4, 0.7, 0.4]
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.8
+          }}
+        />
+      ))}
     </div>
   );
 };
@@ -255,23 +216,48 @@ const InteractiveParticles: React.FC<{ colors: any }> = ({ colors }) => {
 const FloatingElements: React.FC<{ colors: any }> = ({ colors }) => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Círculos grandes de fondo */}
-      {[...Array(4)].map((_, i) => (
+      {/* Círculos grandes de fondo - reducidos */}
+      {[...Array(2)].map((_, i) => (
         <motion.div
           key={`circle-${i}`}
           className="absolute rounded-full"
           style={{
             width: `${200 + i * 50}px`,
             height: `${200 + i * 50}px`,
-            left: `${20 + i * 25}%`,
-            top: `${10 + i * 20}%`,
-            background: `radial-gradient(circle, ${colors.primary}25, transparent 70%)`,
-            border: `2px solid ${colors.primary}40`
+            left: `${20 + i * 40}%`,
+            top: `${10 + i * 30}%`,
+            background: `radial-gradient(circle, ${colors.primary}20, transparent 70%)`,
+            border: `1px solid ${colors.primary}30`
           }}
           animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 180, 360],
-            opacity: [0.5, 0.9, 0.5]
+            scale: [1, 1.05, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 20 + i * 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 3
+          }}
+        />
+      ))}
+      
+      {/* Círculos medianos flotantes - reducidos */}
+      {[...Array(4)].map((_, i) => (
+        <motion.div
+          key={`medium-${i}`}
+          className="absolute rounded-full"
+          style={{
+            width: `${60 + i * 15}px`,
+            height: `${60 + i * 15}px`,
+            left: `${20 + i * 20}%`,
+            top: `${20 + i * 20}%`,
+            background: `linear-gradient(135deg, ${colors.primary}25, ${colors.accent}20)`,
+          }}
+          animate={{
+            x: [0, 50, 0],
+            y: [0, -40, 0],
+            opacity: [0.3, 0.6, 0.3]
           }}
           transition={{
             duration: 15 + i * 3,
@@ -282,68 +268,38 @@ const FloatingElements: React.FC<{ colors: any }> = ({ colors }) => {
         />
       ))}
       
-      {/* Círculos medianos flotantes */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={`medium-${i}`}
-          className="absolute rounded-full"
-          style={{
-            width: `${60 + i * 20}px`,
-            height: `${60 + i * 20}px`,
-            left: `${Math.random() * 90}%`,
-            top: `${Math.random() * 90}%`,
-            background: `linear-gradient(135deg, ${colors.primary}30, ${colors.accent}25)`,
-            backdropFilter: 'blur(1px)'
-          }}
-          animate={{
-            x: [0, 100, 0],
-            y: [0, -80, 0],
-            scale: [0.8, 1.2, 0.8],
-            opacity: [0.4, 0.8, 0.4]
-          }}
-          transition={{
-            duration: 12 + i * 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 1.5
-          }}
-        />
-      ))}
-      
-      {/* Partículas pequeñas brillantes */}
-      {[...Array(12)].map((_, i) => (
+      {/* Partículas pequeñas brillantes - reducidas */}
+      {[...Array(6)].map((_, i) => (
         <motion.div
           key={`particle-${i}`}
           className="absolute"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
+            left: `${15 + i * 15}%`,
+            top: `${15 + i * 15}%`,
           }}
           animate={{
-            x: [0, 60, 0],
-            y: [0, -40, 0],
-            rotate: [0, 360],
-            scale: [1, 1.5, 1]
+            x: [0, 30, 0],
+            y: [0, -20, 0],
+            opacity: [0.4, 0.8, 0.4]
           }}
           transition={{
-            duration: 8 + i * 1.5,
+            duration: 10 + i * 2,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: i * 0.8
+            delay: i * 1.5
           }}
         >
-          {i % 4 === 0 && (
+          {i % 3 === 0 && (
             <div 
               className="w-2 h-2 rounded-full" 
               style={{ 
                 background: `radial-gradient(circle, ${colors.primary}, transparent)`,
-                boxShadow: `0 0 20px ${colors.primary}80`
+                boxShadow: `0 0 15px ${colors.primary}60`
               }} 
             />
           )}
-          {i % 4 === 1 && <Star className="w-4 h-4 opacity-60" style={{ color: colors.primary }} />}
-          {i % 4 === 2 && <Heart className="w-3 h-3 opacity-50" style={{ color: colors.accent }} />}
-          {i % 4 === 3 && <Sparkles className="w-5 h-5 opacity-45" style={{ color: colors.primaryDark }} />}
+          {i % 3 === 1 && <Star className="w-3 h-3 opacity-50" style={{ color: colors.primary }} />}
+          {i % 3 === 2 && <Heart className="w-3 h-3 opacity-40" style={{ color: colors.accent }} />}
         </motion.div>
       ))}
       
@@ -374,14 +330,30 @@ const Gallery: React.FC = () => {
   const { user } = useAuth();
   const [showManager, setShowManager] = useState(false);
   const isAdmin = user?.role === 'admin';
-  const [galleryItems, setGalleryItems] = useState<HybridMediaItem[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState<MediaItem | null>(null);
+  const [galleryItems, setGalleryItems] = useState<FirestoreMediaItem[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<FirestoreMediaItem | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Cargar items al montar el componente
   useEffect(() => {
-    const items = hybridGalleryService.getItems();
-    setGalleryItems(items);
+    const loadItems = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('Loading gallery items from Firestore...');
+        const items = await firestoreGalleryService.getItems();
+        console.log('Gallery items loaded:', items);
+        setGalleryItems(items);
+      } catch (error) {
+        console.error('Error loading gallery items:', error);
+        setError('Error al cargar la galería');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadItems();
   }, []);
 
   const addItem = async (file: File, metadata: {
@@ -392,23 +364,23 @@ const Gallery: React.FC = () => {
     isInstagramPost?: boolean;
   }) => {
     try {
-      const newItem = await hybridGalleryService.addItem(file, metadata);
-      setGalleryItems(prev => [...prev, newItem]);
+      const newItem = await firestoreGalleryService.addItem(file, metadata);
+      setGalleryItems(prev => [newItem, ...prev]);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al guardar el archivo');
     }
   };
 
-  const removeItem = async (id: number) => {
+  const removeItem = async (id: string, cloudinaryId?: string) => {
     try {
-      await hybridGalleryService.removeItem(id);
+      await firestoreGalleryService.removeItem(id, cloudinaryId);
       setGalleryItems(prev => prev.filter(item => item.id !== id));
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al eliminar el archivo');
     }
   };
 
-  const handleVideoClick = (video: MediaItem) => {
+  const handleVideoClick = (video: FirestoreMediaItem) => {
     setSelectedVideo(video);
     setShowVideoModal(true);
   };
@@ -475,7 +447,41 @@ const Gallery: React.FC = () => {
           </motion.div>
         )}
 
-        {galleryItems.length > 0 ? (
+        {loading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-20 bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl mb-16 border border-white/20"
+          >
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: colors.primary }}></div>
+            <h3 className="text-xl font-bold mb-2" style={{ color: colors.secondary }}>
+              Cargando galería...
+            </h3>
+            <p className="text-gray-600">
+              Conectando con Firestore
+            </p>
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-20 bg-red-50 rounded-3xl shadow-2xl mb-16 border border-red-200"
+          >
+            <div className="text-6xl mb-4">⚠️</div>
+            <h3 className="text-2xl font-bold mb-4 text-red-600">
+              Error de conexión
+            </h3>
+            <p className="text-red-500 mb-6">
+              {error}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-8 py-4 rounded-full bg-red-500 text-white font-semibold shadow-lg hover:bg-red-600"
+            >
+              Reintentar
+            </button>
+          </motion.div>
+        ) : galleryItems.length > 0 ? (
           <HeroCarousel colors={colors} items={galleryItems} />
         ) : (
           <motion.div
@@ -489,20 +495,22 @@ const Gallery: React.FC = () => {
           >
             <div className="text-6xl mb-4">📸</div>
             <h3 className="text-2xl font-bold mb-4" style={{ color: colors.secondary }}>
-              Aún no hay contenido en la galería
+              Galería vacía
             </h3>
             <p className="text-gray-600 mb-6">
-              Sube tus primeras imágenes y videos para comenzar a mostrar tu contenido
+              No hay contenido subido aún. {isAdmin ? 'Sube el primer contenido.' : 'El administrador aún no ha subido contenido.'}
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowManager(true)}
-              className="px-8 py-4 rounded-full text-white font-semibold shadow-lg"
-              style={{ backgroundColor: colors.primary }}
-            >
-              Subir Primer Contenido
-            </motion.button>
+            {isAdmin && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowManager(true)}
+                className="px-8 py-4 rounded-full text-white font-semibold shadow-lg"
+                style={{ backgroundColor: colors.primary }}
+              >
+                Subir Primer Contenido
+              </motion.button>
+            )}
           </motion.div>
         )}
 
@@ -541,20 +549,26 @@ const Gallery: React.FC = () => {
                           loop
                           muted
                           playsInline
+                          preload="none"
                           poster={item.thumbnail}
                           ref={(video) => {
                             if (video) {
                               const observer = new IntersectionObserver(
                                 ([entry]) => {
                                   if (entry.isIntersecting) {
-                                    video.play();
-                                    video.muted = false; // Videos individuales CON audio
+                                    video.load();
+                                    video.muted = false;
+                                    video.play().catch(() => {
+                                      video.muted = true;
+                                      video.play().catch(() => {
+                                        console.log('Video autoplay blocked');
+                                      });
+                                    });
                                   } else {
                                     video.pause();
-                                    video.muted = true;
                                   }
                                 },
-                                { threshold: 0.5 }
+                                { threshold: 0.3, rootMargin: '50px' }
                               );
                               observer.observe(video);
                             }
@@ -592,10 +606,17 @@ const Gallery: React.FC = () => {
                           </p>
                         </div>
                         
-                        {/* Indicador de click para expandir */}
-                        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Indicadores de interacción */}
+                        <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                             <Play className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                        
+                        {/* Indicador de audio */}
+                        <div className="absolute top-4 right-4 opacity-70">
+                          <div className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                            🔊 Toca para audio
                           </div>
                         </div>
                       </div>

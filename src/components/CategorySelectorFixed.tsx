@@ -341,7 +341,7 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
         </motion.div>
 
         {/* Cards */}
-        <div className="grid md:grid-cols-2 gap-10 max-w-6xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 max-w-6xl w-full px-4 sm:px-0">
           {/* Technology Card */}
           <motion.div
             initial={{ x: -50, opacity: 0, scale: 0.95 }}
@@ -353,18 +353,15 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
               stiffness: 200
             }}
             whileHover={{ 
-              scale: 1.05,
-              y: -12,
-              rotateY: 3,
+              scale: 1.02,
+              y: -8,
               boxShadow: "0 25px 50px rgba(37, 99, 235, 0.4)",
               transition: { 
-                duration: 0.4,
-                type: "spring",
-                stiffness: 300
+                duration: 0.3
               }
             }}
             whileTap={{ scale: 0.98 }}
-            className="relative rounded-2xl shadow-2xl p-10 cursor-pointer transition-all duration-500 hover:shadow-3xl transform-gpu overflow-hidden"
+            className="relative rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 cursor-pointer transition-all duration-300 hover:shadow-3xl transform-gpu overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 50%, #F0F9FF 100%)`,
               border: '2px solid rgba(37, 99, 235, 0.1)'
@@ -419,7 +416,7 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
               {/* Contenido central */}
               <div className="flex-1 flex flex-col justify-center text-center">
                 <motion.h3 
-                  className="text-3xl font-bold mb-2"
+                  className="text-2xl sm:text-3xl font-bold mb-2"
                   style={{ color: '#1E40AF' }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -498,18 +495,15 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
               stiffness: 200
             }}
             whileHover={{ 
-              scale: 1.05,
-              y: -12,
-              rotateY: -3,
+              scale: 1.02,
+              y: -8,
               boxShadow: "0 25px 50px rgba(245, 158, 11, 0.4)",
               transition: { 
-                duration: 0.4,
-                type: "spring",
-                stiffness: 300
+                duration: 0.3
               }
             }}
             whileTap={{ scale: 0.98 }}
-            className="relative rounded-2xl shadow-2xl p-10 cursor-pointer transition-all duration-500 hover:shadow-3xl transform-gpu overflow-hidden"
+            className="relative rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 cursor-pointer transition-all duration-300 hover:shadow-3xl transform-gpu overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 50%, #FEFCE8 100%)`,
               border: '2px solid rgba(245, 158, 11, 0.1)'
@@ -564,7 +558,7 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
               {/* Contenido central */}
               <div className="flex-1 flex flex-col justify-center text-center">
                 <motion.h3 
-                  className="text-3xl font-bold mb-2"
+                  className="text-2xl sm:text-3xl font-bold mb-2"
                   style={{ color: '#D97706' }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

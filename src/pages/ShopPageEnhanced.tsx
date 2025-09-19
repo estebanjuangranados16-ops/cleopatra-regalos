@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStore } from '../store/useStore';
+import { useFavoritesStore } from '../store/favoritesStore';
 import { Product } from '../types';
 import { products as fallbackProducts } from '../utils/constants';
 import Navbar from '../components/Navbar';
@@ -11,7 +12,8 @@ import Footer from '../components/Footer';
 
 const ShopPageEnhanced: React.FC = () => {
   const { colors, theme } = useTheme();
-  const { addToCart, addToFavorites, removeFromFavorites, isFavorite } = useStore();
+  const { addToCart } = useStore();
+  const { addItem: addToFavorites, removeItem: removeFromFavorites, isInFavorites } = useFavoritesStore();
   const navigate = useNavigate();
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -215,8 +217,8 @@ const ShopPageEnhanced: React.FC = () => {
         {!loading && (
           <>
         {/* Filters and Search */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -266,23 +268,23 @@ const ShopPageEnhanced: React.FC = () => {
             </select>
 
             {/* View Mode */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 sm:col-span-1 col-span-2 justify-center sm:justify-start">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 <Grid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 <List className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="flex justify-between items-center text-sm text-gray-600">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-gray-600">
             <span>Mostrando {paginatedProducts.length} de {filteredProducts.length} productos</span>
             <span>Página {currentPage} de {totalPages}</span>
           </div>
@@ -290,7 +292,7 @@ const ShopPageEnhanced: React.FC = () => {
 
         {/* Products Grid/List */}
         <div className={viewMode === 'grid' 
-          ? 'grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
           : 'space-y-4'
         }>
           {paginatedProducts.map((product, index) => (
@@ -362,13 +364,27 @@ const ShopPageEnhanced: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => isFavorite(product.id) ? removeFromFavorites(product.id) : addToFavorites(product)}
+                        onClick={() => {
+                          const productId = String(product.id);
+                          if (isInFavorites(productId)) {
+                            removeFromFavorites(productId);
+                          } else {
+                            addToFavorites({
+                              id: productId,
+                              name: product.name,
+                              price: product.price,
+                              image: (product.images && product.images[0]) || product.image || '',
+                              category: product.category === 'tecnologia' ? 'tech' : 'gifts',
+                              description: product.description
+                            });
+                          }
+                        }}
                         className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          isFavorite(product.id) ? 'bg-red-500 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'
+                          isInFavorites(String(product.id)) ? 'bg-red-500 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'
                         }`}
-                        title={isFavorite(product.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                        title={isInFavorites(String(product.id)) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                       >
-                        <Heart className={`w-4 h-4 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
+                        <Heart className={`w-4 h-4 ${isInFavorites(String(product.id)) ? 'fill-current' : ''}`} />
                       </motion.button>
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -385,11 +401,11 @@ const ShopPageEnhanced: React.FC = () => {
                 )}
               </div>
               
-              <div className={viewMode === 'grid' ? 'p-6' : 'flex-1'}>
-                <h3 className="text-xl font-bold mb-2" style={{ color: colors.secondary }}>
+              <div className={viewMode === 'grid' ? 'p-4 sm:p-6' : 'flex-1'}>
+                <h3 className="text-lg sm:text-xl font-bold mb-2 line-clamp-2" style={{ color: colors.secondary }}>
                   {product.name}
                 </h3>
-                <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base line-clamp-2">{product.description}</p>
                 
                 {/* Rating */}
                 <div className="flex items-center mb-3">
@@ -402,12 +418,45 @@ const ShopPageEnhanced: React.FC = () => {
                   <span className="text-sm text-gray-500 ml-2">(4.0)</span>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold" style={{ color: colors.primary }}>
-                    {formatPrice(product.price)}
-                  </span>
-                  
-                  {viewMode === 'list' ? (
+                {viewMode === 'grid' ? (
+                  <div className="space-y-3">
+                    <div className="text-center">
+                      <span className="text-xl sm:text-2xl font-bold" style={{ color: colors.primary }}>
+                        {formatPrice(product.price)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        onClick={() => {
+                          const message = `Hola! Me interesa este producto:\n\n• ${product.name}\n• Precio: ${formatPrice(product.price)}\n\n¿Podrías darme más información?`;
+                          const whatsappUrl = `https://wa.me/573024547679?text=${encodeURIComponent(message)}`;
+                          window.open(whatsappUrl, '_blank');
+                        }}
+                        className="flex-1 px-3 py-2 rounded-lg text-white font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: colors.accent }}
+                        title="Consultar por WhatsApp"
+                      >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                        </svg>
+                        <span className="hidden sm:inline">Consultar</span>
+                      </button>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg text-white font-semibold flex items-center justify-center gap-2 text-sm hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: colors.primary }}
+                        title="Agregar al carrito"
+                      >
+                        <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+                        <span className="sm:hidden">Agregar</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl sm:text-2xl font-bold" style={{ color: colors.primary }}>
+                      {formatPrice(product.price)}
+                    </span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -420,34 +469,52 @@ const ShopPageEnhanced: React.FC = () => {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => isFavorite(product.id) ? removeFromFavorites(product.id) : addToFavorites(product)}
+                        onClick={() => {
+                          const productId = String(product.id);
+                          if (isInFavorites(productId)) {
+                            removeFromFavorites(productId);
+                          } else {
+                            addToFavorites({
+                              id: productId,
+                              name: product.name,
+                              price: product.price,
+                              image: (product.images && product.images[0]) || product.image || '',
+                              category: product.category === 'tecnologia' ? 'tech' : 'gifts',
+                              description: product.description
+                            });
+                          }
+                        }}
                         className={`p-2 rounded-lg transition-colors ${
-                          isFavorite(product.id) ? 'bg-red-500 text-white' : 'border border-gray-300 hover:bg-gray-50'
+                          isInFavorites(String(product.id)) ? 'bg-red-500 text-white' : 'border border-gray-300 hover:bg-gray-50'
                         }`}
-                        title={isFavorite(product.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                        title={isInFavorites(String(product.id)) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                       >
-                        <Heart className={`w-4 h-4 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
+                        <Heart className={`w-4 h-4 ${isInFavorites(String(product.id)) ? 'fill-current' : ''}`} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const message = `Hola! Me interesa este producto:\n\n• ${product.name}\n• Precio: ${formatPrice(product.price)}\n\n¿Podrías darme más información?`;
+                          const whatsappUrl = `https://wa.me/573024547679?text=${encodeURIComponent(message)}`;
+                          window.open(whatsappUrl, '_blank');
+                        }}
+                        className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        title="Consultar por WhatsApp"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                        </svg>
                       </button>
                       <button
                         onClick={() => addToCart(product)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold hover:scale-105 transition-transform"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-white font-semibold hover:opacity-90 transition-opacity text-sm"
                         style={{ backgroundColor: colors.accent }}
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Agregar
+                        <span className="hidden sm:inline">Agregar</span>
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => addToCart(product)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold hover:scale-105 transition-transform"
-                      style={{ backgroundColor: colors.accent }}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Agregar
-                    </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
@@ -456,36 +523,50 @@ const ShopPageEnhanced: React.FC = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center mt-12">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-center">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-lg bg-white border border-gray-300 disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 rounded-lg bg-white border border-gray-300 disabled:opacity-50 text-sm sm:text-base"
               >
-                Anterior
+                <span className="hidden sm:inline">Anterior</span>
+                <span className="sm:hidden">←</span>
               </button>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 rounded-lg ${
-                    currentPage === page 
-                      ? 'text-white' 
-                      : 'bg-white border border-gray-300'
-                  }`}
-                  style={currentPage === page ? { backgroundColor: colors.primary } : {}}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let page: number;
+                if (totalPages <= 5) {
+                  page = i + 1;
+                } else if (currentPage <= 3) {
+                  page = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  page = totalPages - 4 + i;
+                } else {
+                  page = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base ${
+                      currentPage === page 
+                        ? 'text-white' 
+                        : 'bg-white border border-gray-300 hover:bg-gray-50'
+                    }`}
+                    style={currentPage === page ? { backgroundColor: colors.primary } : {}}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
               
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-lg bg-white border border-gray-300 disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 rounded-lg bg-white border border-gray-300 disabled:opacity-50 text-sm sm:text-base"
               >
-                Siguiente
+                <span className="hidden sm:inline">Siguiente</span>
+                <span className="sm:hidden">→</span>
               </button>
             </div>
           </div>
@@ -646,28 +727,58 @@ const ShopPageEnhanced: React.FC = () => {
                       
                       {/* Actions */}
                       <div className="space-y-4">
-                        <div className="flex gap-4">
+                        <div className="space-y-3">
                           <button
                             onClick={() => {
-                              addToCart(selectedProduct);
-                              setSelectedProduct(null);
+                              const message = `Hola! Me interesa este producto:\n\n• ${selectedProduct.name}\n• Precio: ${formatPrice(selectedProduct.price)}\n\n¿Podrías darme más información y disponibilidad?`;
+                              const whatsappUrl = `https://wa.me/573024547679?text=${encodeURIComponent(message)}`;
+                              window.open(whatsappUrl, '_blank');
                             }}
-                            className="flex-1 py-4 text-white font-semibold text-lg rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                            style={{ backgroundColor: colors.primary }}
+                            className="w-full py-4 text-white font-semibold text-lg rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                            style={{ backgroundColor: colors.accent }}
                           >
-                            <ShoppingCart className="w-5 h-5" />
-                            Agregar al Carrito
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                            </svg>
+                            Consultar por WhatsApp
                           </button>
-                          <button
-                            onClick={() => isFavorite(selectedProduct.id) ? removeFromFavorites(selectedProduct.id) : addToFavorites(selectedProduct)}
-                            className={`p-4 rounded-lg border-2 transition-colors ${
-                              isFavorite(selectedProduct.id) 
-                                ? 'bg-red-500 border-red-500 text-white' 
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            <Heart className={`w-6 h-6 ${isFavorite(selectedProduct.id) ? 'fill-current' : ''}`} />
-                          </button>
+                          <div className="flex gap-4">
+                            <button
+                              onClick={() => {
+                                addToCart(selectedProduct);
+                                setSelectedProduct(null);
+                              }}
+                              className="flex-1 py-4 text-white font-semibold text-lg rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                              style={{ backgroundColor: colors.primary }}
+                            >
+                              <ShoppingCart className="w-5 h-5" />
+                              Agregar al Carrito
+                            </button>
+                            <button
+                              onClick={() => {
+                                const productId = String(selectedProduct.id);
+                                if (isInFavorites(productId)) {
+                                  removeFromFavorites(productId);
+                                } else {
+                                  addToFavorites({
+                                    id: productId,
+                                    name: selectedProduct.name,
+                                    price: selectedProduct.price,
+                                    image: (selectedProduct.images && selectedProduct.images[0]) || selectedProduct.image || '',
+                                    category: selectedProduct.category === 'tecnologia' ? 'tech' : 'gifts',
+                                    description: selectedProduct.description
+                                  });
+                                }
+                              }}
+                              className={`p-4 rounded-lg border-2 transition-colors ${
+                                isInFavorites(String(selectedProduct.id)) 
+                                  ? 'bg-red-500 border-red-500 text-white' 
+                                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              <Heart className={`w-6 h-6 ${isInFavorites(String(selectedProduct.id)) ? 'fill-current' : ''}`} />
+                            </button>
+                          </div>
                         </div>
                         
                         <button

@@ -6,8 +6,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Theme } from './types';
 import { sanitizeForLog } from './utils/security';
 import ErrorBoundary from './components/ErrorBoundary';
+// Componentes críticos - no lazy
+import Toast from './components/Toast';
+import WhatsAppButton from './components/WhatsAppButton';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
+import ThemeToggleButton from './components/ThemeToggleButton';
 
-// Lazy load components
+// Lazy load components - optimizado
 const CategorySelector = lazy(() => import('./components/CategorySelectorFixed'));
 const Navbar = lazy(() => import('./components/Navbar'));
 const Hero = lazy(() => import('./components/Hero'));
@@ -19,11 +24,6 @@ const Gallery = lazy(() => import('./components/Gallery'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
 const Contact = lazy(() => import('./components/Contact'));
 const Footer = lazy(() => import('./components/Footer'));
-const Toast = lazy(() => import('./components/Toast'));
-const WhatsAppButton = lazy(() => import('./components/WhatsAppButton'));
-const PWAInstallPrompt = lazy(() => import('./components/PWAInstallPrompt'));
-const ThemeToggleButton = lazy(() => import('./components/ThemeToggleButton'));
-const AdminRoute = lazy(() => import('./components/AdminRoute'));
 
 // Pages
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -33,10 +33,11 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const ShopPage = lazy(() => import('./pages/ShopPageEnhanced'));
 
-// Loading component
+// Loading component optimizado
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-blue-50">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+    <p className="text-gray-600 text-sm">Cargando Cleopatra...</p>
   </div>
 );
 
@@ -115,21 +116,10 @@ const App: React.FC = () => {
                 </Routes>
               </Suspense>
               
-              <Suspense fallback={null}>
-                <Toast />
-              </Suspense>
-              
-              <Suspense fallback={null}>
-                <WhatsAppButton />
-              </Suspense>
-              
-              <Suspense fallback={null}>
-                <ThemeToggleButton />
-              </Suspense>
-              
-              <Suspense fallback={null}>
-                <PWAInstallPrompt />
-              </Suspense>
+              <Toast />
+              <WhatsAppButton />
+              <ThemeToggleButton />
+              <PWAInstallPrompt />
             </div>
           </Router>
         </ThemeProvider>

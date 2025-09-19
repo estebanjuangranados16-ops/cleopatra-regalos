@@ -4,11 +4,11 @@ import { Upload, Video, Image, X, Play, Instagram, HardDrive, Lock } from 'lucid
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { MediaItem } from '../services/galleryService';
-import { hybridGalleryService } from '../services/hybridGalleryService';
+import { firestoreGalleryService, FirestoreMediaItem } from '../services/firestoreGalleryService';
 import InstagramVideoUploader from './InstagramVideoUploader';
 
 interface GalleryManagerProps {
-  items: MediaItem[];
+  items: FirestoreMediaItem[];
   onAddItem: (file: File, metadata: {
     title: string;
     description: string;
@@ -16,8 +16,8 @@ interface GalleryManagerProps {
     badge: string;
     isInstagramPost?: boolean;
   }) => Promise<void>;
-  onRemoveItem: (id: number) => void;
-  onVideoClick?: (video: MediaItem) => void;
+  onRemoveItem: (id: string, cloudinaryId?: string) => void;
+  onVideoClick?: (video: FirestoreMediaItem) => void;
 }
 
 const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRemoveItem, onVideoClick }) => {
@@ -38,7 +38,8 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setStorageInfo(hybridGalleryService.getStorageInfo());
+    // Para Firestore no necesitamos límites de almacenamiento local
+    setStorageInfo({ used: items.length, limit: 999999, items: items.length, percentage: 0 });
   }, [items]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +69,7 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
           isInstagramPost: formData.isInstagramPost
         });
         
-        setStorageInfo(hybridGalleryService.getStorageInfo());
+        setStorageInfo({ used: items.length + 1, limit: 999999, items: items.length + 1, percentage: 0 });
 
         // Limpiar formulario
         setFormData({
@@ -345,7 +346,7 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
               )}
               
               <button
-                onClick={() => onRemoveItem(item.id)}
+                onClick={() => onRemoveItem(item.id!, item.cloudinaryId)}
                 className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-4 h-4" />

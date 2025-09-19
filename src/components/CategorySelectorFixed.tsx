@@ -344,24 +344,17 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 max-w-6xl w-full px-4 sm:px-0">
           {/* Technology Card */}
           <motion.div
-            initial={{ x: -50, opacity: 0, scale: 0.95 }}
-            animate={{ x: 0, opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ 
-              delay: 0.2,
-              duration: 0.3,
-              type: "spring",
-              stiffness: 200
+              delay: 0.1,
+              duration: 0.2
             }}
             whileHover={{ 
-              scale: 1.02,
-              y: -8,
-              boxShadow: "0 25px 50px rgba(37, 99, 235, 0.4)",
-              transition: { 
-                duration: 0.3
-              }
+              scale: 1.005
             }}
-            whileTap={{ scale: 0.98 }}
-            className="relative rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 cursor-pointer transition-all duration-300 hover:shadow-3xl transform-gpu overflow-hidden"
+            whileTap={{ scale: 0.99 }}
+            className="relative rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 cursor-pointer transition-all duration-200 hover:shadow-3xl transform-gpu overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 50%, #F0F9FF 100%)`,
               border: '2px solid rgba(37, 99, 235, 0.1)'
@@ -382,22 +375,12 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
               {/* Logo y icono combinados */}
               <div className="flex items-center justify-center mb-4 space-x-4">
                 {/* Logo de marca */}
-                <motion.img
+                <img
                   src="/assets/brand/logos/cleopatra-logo-blue.png"
                   alt="Cleopatra Tech"
                   className="w-16 h-16 object-contain"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ 
-                    delay: 0.4, 
-                    duration: 0.2,
-                    type: "spring",
-                    stiffness: 200
-                  }}
-                  whileHover={{ 
-                    scale: 1.1,
-                    transition: { duration: 0.2 }
-                  }}
+                  width="64"
+                  height="64"
                 />
                 
                 {/* Icono temático */}
@@ -486,24 +469,17 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
 
           {/* Gifts Card */}
           <motion.div
-            initial={{ x: 50, opacity: 0, scale: 0.95 }}
-            animate={{ x: 0, opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ 
-              delay: 0.3,
-              duration: 0.3,
-              type: "spring",
-              stiffness: 200
+              delay: 0.15,
+              duration: 0.2
             }}
             whileHover={{ 
-              scale: 1.02,
-              y: -8,
-              boxShadow: "0 25px 50px rgba(245, 158, 11, 0.4)",
-              transition: { 
-                duration: 0.3
-              }
+              scale: 1.005
             }}
-            whileTap={{ scale: 0.98 }}
-            className="relative rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 cursor-pointer transition-all duration-300 hover:shadow-3xl transform-gpu overflow-hidden"
+            whileTap={{ scale: 0.99 }}
+            className="relative rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10 cursor-pointer transition-all duration-200 hover:shadow-3xl transform-gpu overflow-hidden"
             style={{ 
               background: `linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 50%, #FEFCE8 100%)`,
               border: '2px solid rgba(245, 158, 11, 0.1)'
@@ -524,22 +500,12 @@ const CategorySelectorFixed: React.FC<CategorySelectorProps> = ({ onSelect }) =>
               {/* Logo y icono combinados */}
               <div className="flex items-center justify-center mb-4 space-x-4">
                 {/* Logo de marca */}
-                <motion.img
+                <img
                   src="/assets/brand/logos/cleopatra-logo-gold.png"
                   alt="Cleopatra Regalos"
                   className="w-16 h-16 object-contain"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ 
-                    delay: 0.5, 
-                    duration: 0.2,
-                    type: "spring",
-                    stiffness: 200
-                  }}
-                  whileHover={{ 
-                    scale: 1.1,
-                    transition: { duration: 0.2 }
-                  }}
+                  width="64"
+                  height="64"
                 />
                 
                 {/* Icono temático */}

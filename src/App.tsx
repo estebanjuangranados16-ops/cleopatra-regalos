@@ -7,6 +7,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Theme } from './types';
 import { sanitizeForLog } from './utils/security';
 import { measureWebVitals, optimizeWebVitals, observePerformance } from './utils/webVitals';
+import { preloadCriticalChunks, deferNonCriticalJS } from './utils/bundleOptimization';
 import ErrorBoundary from './components/ErrorBoundary';
 import SEOHead from './components/SEOHead';
 // Componentes críticos - no lazy
@@ -15,10 +16,16 @@ import WhatsAppButton from './components/WhatsAppButton';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import ThemeToggleButton from './components/ThemeToggleButton';
 
+// Critical components - no lazy for LCP
+import Navbar from './components/Navbar';
+import CriticalHero from './components/CriticalHero';
+import Footer from './components/Footer';
+
+// Heavy components - lazy load
+const Hero = lazy(() => import('./components/Hero'));
+
 // Lazy load components - optimizado
 const CategorySelector = lazy(() => import('./components/CategorySelectorFixed'));
-const Navbar = lazy(() => import('./components/Navbar'));
-const Hero = lazy(() => import('./components/Hero'));
 const About = lazy(() => import('./components/About'));
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const Products = lazy(() => import('./components/ProductsComplete'));
@@ -26,7 +33,6 @@ const Features = lazy(() => import('./components/Features'));
 const Gallery = lazy(() => import('./components/Gallery'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
 const Contact = lazy(() => import('./components/Contact'));
-const Footer = lazy(() => import('./components/Footer'));
 
 // Pages
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -70,14 +76,30 @@ const HomePage: React.FC = () => {
       {!showCategorySelector && (
         <>
           <Navbar />
-          <Hero />
-          <About />
-          <HowItWorks />
-          <Products />
-          <Features />
-          <Gallery />
-          <Testimonials />
-          <Contact />
+          <Suspense fallback={<CriticalHero />}>
+            <Hero />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse" />}>
+            <About />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse" />}>
+            <HowItWorks />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse" />}>
+            <Products />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse" />}>
+            <Features />
+          </Suspense>
+          <Suspense fallback={<div className="h-screen bg-gray-100 animate-pulse" />}>
+            <Gallery />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse" />}>
+            <Testimonials />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse" />}>
+            <Contact />
+          </Suspense>
           <Footer />
         </>
       )}
@@ -87,7 +109,9 @@ const HomePage: React.FC = () => {
 
 const App: React.FC = () => {
   React.useEffect(() => {
-    // Optimizaciones de performance
+    // Optimizaciones críticas de performance
+    preloadCriticalChunks();
+    deferNonCriticalJS();
     optimizeWebVitals();
     
     // Medir Web Vitals

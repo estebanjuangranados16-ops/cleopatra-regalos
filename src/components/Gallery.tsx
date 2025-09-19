@@ -37,9 +37,11 @@ const HeroCarousel: React.FC<{ colors: any; items: FirestoreMediaItem[] }> = ({ 
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
+    if (items.length <= 1) return;
+    
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % items.length);
-    }, 4000);
+    }, 5000); // Slower for better performance
     
     return () => clearInterval(interval);
   }, [items.length]);
@@ -184,30 +186,25 @@ const InteractiveParticles: React.FC<{ colors: any }> = ({ colors }) => {
   
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(3)].map((_, i) => (
-        <motion.div
-          key={`interactive-${i}`}
-          className="absolute rounded-full"
-          style={{
-            width: '30px',
-            height: '30px',
-            left: `${25 + i * 25}%`,
-            top: `${35 + i * 15}%`,
-            background: `radial-gradient(circle, ${colors.primary}50, transparent)`,
-            boxShadow: `0 0 20px ${colors.primary}40`,
-          }}
-          animate={{
-            scale: [0.8, 1.1, 0.8],
-            opacity: [0.4, 0.7, 0.4]
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 0.8
-          }}
-        />
-      ))}
+      {/* Reducido a 1 partícula para performance crítico */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: '40px',
+          height: '40px',
+          left: '50%',
+          top: '40%',
+          background: `radial-gradient(circle, ${colors.primary}30, transparent)`,
+        }}
+        animate={{
+          opacity: [0.3, 0.6, 0.3]
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
     </div>
   );
 };
@@ -242,28 +239,26 @@ const FloatingElements: React.FC<{ colors: any }> = ({ colors }) => {
         />
       ))}
       
-      {/* Círculos medianos flotantes - reducidos */}
-      {[...Array(4)].map((_, i) => (
+      {/* Círculos medianos flotantes - solo 2 para performance */}
+      {[...Array(2)].map((_, i) => (
         <motion.div
           key={`medium-${i}`}
           className="absolute rounded-full"
           style={{
-            width: `${60 + i * 15}px`,
-            height: `${60 + i * 15}px`,
-            left: `${20 + i * 20}%`,
-            top: `${20 + i * 20}%`,
-            background: `linear-gradient(135deg, ${colors.primary}25, ${colors.accent}20)`,
+            width: `${80 + i * 20}px`,
+            height: `${80 + i * 20}px`,
+            left: `${30 + i * 40}%`,
+            top: `${30 + i * 30}%`,
+            background: `linear-gradient(135deg, ${colors.primary}20, ${colors.accent}15)`,
           }}
           animate={{
-            x: [0, 50, 0],
-            y: [0, -40, 0],
-            opacity: [0.3, 0.6, 0.3]
+            opacity: [0.2, 0.4, 0.2]
           }}
           transition={{
-            duration: 15 + i * 3,
+            duration: 20 + i * 5,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: i * 2
+            delay: i * 3
           }}
         />
       ))}

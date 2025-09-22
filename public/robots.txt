@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://cleopatraregalos.com/sitemap.xml
+
+# Disallow admin pages
+Disallow: /admin
+Disallow: /checkout/success
+Disallow: /checkout/failure
+Disallow: /checkout/pending
+
+# Allow important pages
+Allow: /
+Allow: /shop
+Allow: /cart
+Allow: /login
+Allow: /register
+
+# Crawl delay
+Crawl-delay: 1

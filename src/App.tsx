@@ -10,11 +10,14 @@ import { measureWebVitals, optimizeWebVitals, observePerformance } from './utils
 import { preloadCriticalChunks, deferNonCriticalJS } from './utils/bundleOptimization';
 import ErrorBoundary from './components/ErrorBoundary';
 import SEOHead from './components/SEOHead';
+import SEOHelmet from './components/SEOHelmet';
+import { analyticsService } from './services/analyticsService';
 // Componentes críticos - no lazy
 import Toast from './components/Toast';
 import WhatsAppButton from './components/WhatsAppButton';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import ThemeToggleButton from './components/ThemeToggleButton';
+
 
 // Critical components - no lazy for LCP
 import Navbar from './components/Navbar';
@@ -41,6 +44,9 @@ const CartPage = lazy(() => import('./pages/CartPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const ShopPage = lazy(() => import('./pages/ShopPageEnhanced'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const PaymentFailure = lazy(() => import('./pages/PaymentFailure'));
+
 
 // Loading component optimizado
 const LoadingSpinner = () => (
@@ -120,6 +126,9 @@ const App: React.FC = () => {
     // Observar performance
     observePerformance();
     
+    // Track initial page view
+    analyticsService.trackPageView(window.location.pathname, document.title);
+    
     // Registrar Service Worker para PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -142,6 +151,7 @@ const App: React.FC = () => {
             <Router>
               <div className="App">
                 <SEOHead />
+                <SEOHelmet />
                 <Suspense fallback={<LoadingSpinner />}>
                   <Routes>
                     <Route path="/" element={<HomePage />} />
@@ -150,13 +160,18 @@ const App: React.FC = () => {
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/checkout/success" element={<PaymentSuccess />} />
+                    <Route path="/checkout/failure" element={<PaymentFailure />} />
+                    <Route path="/checkout/pending" element={<PaymentSuccess />} />
                     <Route path="/admin" element={<AdminPage />} />
+
                   </Routes>
                 </Suspense>
                 
                 <Toast />
                 <WhatsAppButton />
                 <ThemeToggleButton />
+
                 <PWAInstallPrompt />
               </div>
             </Router>

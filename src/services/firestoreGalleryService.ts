@@ -33,6 +33,12 @@ export class FirestoreGalleryService {
   // Obtener todos los items desde Firestore
   async getItems(): Promise<FirestoreMediaItem[]> {
     try {
+      // Check if Firestore is available
+      if (!db) {
+        console.log('Firestore not available - using demo mode');
+        return [];
+      }
+      
       const q = query(
         collection(db, COLLECTION_NAME), 
         orderBy('createdAt', 'desc')
@@ -61,6 +67,11 @@ export class FirestoreGalleryService {
     isInstagramPost?: boolean;
   }): Promise<FirestoreMediaItem> {
     try {
+      // Check if Firestore is available
+      if (!db) {
+        throw new Error('Firestore no está configurado. Funcionalidad en modo demo.');
+      }
+      
       // Subir archivo a Cloudinary
       const uploadResult = await cloudinaryService.uploadFile(file);
       
@@ -95,6 +106,11 @@ export class FirestoreGalleryService {
   // Eliminar item de Firestore y Cloudinary
   async removeItem(id: string, cloudinaryId?: string): Promise<void> {
     try {
+      // Check if Firestore is available
+      if (!db) {
+        throw new Error('Firestore no está configurado. Funcionalidad en modo demo.');
+      }
+      
       // Eliminar de Cloudinary si existe
       if (cloudinaryId) {
         await cloudinaryService.deleteFile(cloudinaryId, 'image');

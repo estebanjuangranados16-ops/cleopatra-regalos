@@ -3,21 +3,14 @@ import { motion } from 'framer-motion';
 import { Upload, Video, Image, X, Play, Instagram, HardDrive, Lock } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { MediaItem } from '../services/galleryService';
-import { firestoreGalleryService, FirestoreMediaItem } from '../services/firestoreGalleryService';
+import { hybridGalleryService, MediaItem } from '../services/hybridGalleryService';
 import InstagramVideoUploader from './InstagramVideoUploader';
 
 interface GalleryManagerProps {
-  items: FirestoreMediaItem[];
-  onAddItem: (file: File, metadata: {
-    title: string;
-    description: string;
-    category: string;
-    badge: string;
-    isInstagramPost?: boolean;
-  }) => Promise<void>;
-  onRemoveItem: (id: string, cloudinaryId?: string) => void;
-  onVideoClick?: (video: FirestoreMediaItem) => void;
+  items: MediaItem[];
+  onAddItem: (item: Omit<MediaItem, 'id' | 'createdAt'>) => Promise<void>;
+  onRemoveItem: (id: string) => void;
+  onVideoClick?: (video: MediaItem) => void;
 }
 
 const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRemoveItem, onVideoClick }) => {
@@ -61,7 +54,10 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
       }
       
       try {
-        await onAddItem(file, {
+        await onAddItem({
+          type: uploadType,
+          src: src,
+          thumbnail: thumbnail,
           title: formData.title || `${uploadType === 'video' ? 'Video' : 'Imagen'} ${Date.now()}`,
           description: formData.description || 'Contenido subido desde la galería',
           category: formData.category,
@@ -302,7 +298,9 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
             const blob = await response.blob();
             const file = new File([blob], 'instagram-video.mp4', { type: 'video/mp4' });
             
-            await onAddItem(file, {
+            await onAddItem({
+              type: 'video',
+              src: URL.createObjectURL(file),
               title: videoData.title,
               description: videoData.description,
               category: 'Instagram',
@@ -346,7 +344,7 @@ const GalleryManager: React.FC<GalleryManagerProps> = ({ items, onAddItem, onRem
               )}
               
               <button
-                onClick={() => onRemoveItem(item.id!, item.cloudinaryId)}
+                onClick={() => onRemoveItem(item.id)}
                 className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-4 h-4" />

@@ -5,13 +5,17 @@ export interface Product {
   id: string | number;
   name: string;
   price: string | number;
+  originalPrice?: string | number;
   image?: string;
   images?: string[];
   videos?: string[];
   images360?: string[];
   category: 'regalos' | 'tecnologia';
   description: string;
+  stock?: number;
+  featured?: boolean;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Testimonial {

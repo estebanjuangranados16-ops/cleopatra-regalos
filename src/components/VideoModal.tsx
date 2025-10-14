@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { FirestoreMediaItem } from '../services/firestoreGalleryService';
+import { MediaItem } from '../services/hybridGalleryService';
 
 interface VideoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  video: FirestoreMediaItem | null;
+  video: MediaItem | null;
 }
 
 const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, video }) => {

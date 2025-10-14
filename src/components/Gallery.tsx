@@ -5,8 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryManager from './GalleryManager';
 import VideoModal from './VideoModal';
-import { firestoreGalleryService, FirestoreMediaItem } from '../services/firestoreGalleryService';
-import { MediaItem } from '../services/galleryService';
+import { hybridGalleryService, MediaItem } from '../services/hybridGalleryService';
 
 // Componente ImageWithFallback
 const ImageWithFallback: React.FC<{
@@ -30,7 +29,7 @@ const ImageWithFallback: React.FC<{
 // Los datos ahora vienen de Firestore - no hay datos hardcodeados
 
 // Carrusel Hero
-const HeroCarousel: React.FC<{ colors: any; items: FirestoreMediaItem[] }> = ({ colors, items }) => {
+const HeroCarousel: React.FC<{ colors: any; items: MediaItem[] }> = ({ colors, items }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -325,8 +324,8 @@ const Gallery: React.FC = () => {
   const { user } = useAuth();
   const [showManager, setShowManager] = useState(false);
   const isAdmin = user?.role === 'admin';
-  const [galleryItems, setGalleryItems] = useState<FirestoreMediaItem[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState<FirestoreMediaItem | null>(null);
+  const [galleryItems, setGalleryItems] = useState<MediaItem[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<MediaItem | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -338,7 +337,7 @@ const Gallery: React.FC = () => {
         setLoading(true);
         setError(null);
         console.log('Loading gallery items from Firestore...');
-        const items = await firestoreGalleryService.getItems();
+        const items = await hybridGalleryService.getItems();
         console.log('Gallery items loaded:', items);
         setGalleryItems(items);
       } catch (error) {
@@ -351,15 +350,9 @@ const Gallery: React.FC = () => {
     loadItems();
   }, []);
 
-  const addItem = async (file: File, metadata: {
-    title: string;
-    description: string;
-    category: string;
-    badge: string;
-    isInstagramPost?: boolean;
-  }) => {
+  const addItem = async (item: Omit<MediaItem, 'id' | 'createdAt'>) => {
     try {
-      const newItem = await firestoreGalleryService.addItem(file, metadata);
+      const newItem = await hybridGalleryService.addItem(item);
       setGalleryItems(prev => [newItem, ...prev]);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al guardar el archivo');
@@ -368,14 +361,14 @@ const Gallery: React.FC = () => {
 
   const removeItem = async (id: string, cloudinaryId?: string) => {
     try {
-      await firestoreGalleryService.removeItem(id, cloudinaryId);
+      await hybridGalleryService.removeItem(id);
       setGalleryItems(prev => prev.filter(item => item.id !== id));
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al eliminar el archivo');
     }
   };
 
-  const handleVideoClick = (video: FirestoreMediaItem) => {
+  const handleVideoClick = (video: MediaItem) => {
     setSelectedVideo(video);
     setShowVideoModal(true);
   };

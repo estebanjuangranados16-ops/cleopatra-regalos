@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Video, Plus, Edit, Trash2, Play, X, Upload } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { hybridGalleryService, HybridMediaItem } from '../../services/hybridGalleryService';
+import { hybridGalleryService, MediaItem } from '../../services/hybridGalleryService';
 import InstagramVideoUploader from '../InstagramVideoUploader';
 
 interface VideoManagerProps {
@@ -12,9 +12,9 @@ interface VideoManagerProps {
 
 const VideoManager: React.FC<VideoManagerProps> = ({ isOpen, onClose }) => {
   const { colors } = useTheme();
-  const [videos, setVideos] = useState<HybridMediaItem[]>([]);
+  const [videos, setVideos] = useState<MediaItem[]>([]);
   const [showUploader, setShowUploader] = useState(false);
-  const [editingVideo, setEditingVideo] = useState<HybridMediaItem | null>(null);
+  const [editingVideo, setEditingVideo] = useState<MediaItem | null>(null);
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
@@ -28,13 +28,13 @@ const VideoManager: React.FC<VideoManagerProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const loadVideos = () => {
-    const allItems = hybridGalleryService.getItems();
+  const loadVideos = async () => {
+    const allItems = await hybridGalleryService.getItems();
     const videoItems = allItems.filter(item => item.type === 'video');
     setVideos(videoItems);
   };
 
-  const handleEdit = (video: HybridMediaItem) => {
+  const handleEdit = (video: MediaItem) => {
     setEditingVideo(video);
     setEditForm({
       title: video.title,
@@ -48,14 +48,14 @@ const VideoManager: React.FC<VideoManagerProps> = ({ isOpen, onClose }) => {
     if (!editingVideo) return;
     
     try {
-      const allItems = hybridGalleryService.getItems();
+      const allItems = await hybridGalleryService.getItems();
       const updatedItems = allItems.map(item => 
         item.id === editingVideo.id 
           ? { ...item, ...editForm }
           : item
       );
       
-      localStorage.setItem('cleopatra_gallery_hybrid', JSON.stringify(updatedItems));
+      localStorage.setItem('cleopatra_gallery_items', JSON.stringify(updatedItems));
       setEditingVideo(null);
       loadVideos();
     } catch (error) {
@@ -63,7 +63,7 @@ const VideoManager: React.FC<VideoManagerProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro de eliminar este video?')) return;
     
     try {
@@ -80,7 +80,9 @@ const VideoManager: React.FC<VideoManagerProps> = ({ isOpen, onClose }) => {
       const blob = await response.blob();
       const file = new File([blob], 'admin-video.mp4', { type: 'video/mp4' });
       
-      await hybridGalleryService.addItem(file, {
+      await hybridGalleryService.addItem({
+        type: 'video',
+        src: URL.createObjectURL(file),
         title: videoData.title,
         description: videoData.description,
         category: 'Admin',

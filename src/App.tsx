@@ -12,6 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import SEOHead from './components/SEOHead';
 import SEOHelmet from './components/SEOHelmet';
 import { analyticsService } from './services/analyticsService';
+import { seedService } from './services/seedService';
 // Componentes críticos - no lazy
 import Toast from './components/Toast';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -128,6 +129,11 @@ const App: React.FC = () => {
     
     // Track initial page view
     analyticsService.trackPageView(window.location.pathname, document.title);
+    
+    // Initialize Firebase data
+    seedService.initializeData().catch(error => {
+      console.log('Datos inicializados en modo local:', error.message);
+    });
     
     // Registrar Service Worker para PWA
     if ('serviceWorker' in navigator) {

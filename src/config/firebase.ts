@@ -3,30 +3,16 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 
-// Temporary disable Firebase for demo
+// Firebase configuration - credenciales reales
 const firebaseConfig = {
-  apiKey: "demo-key",
-  authDomain: "demo.firebaseapp.com",
-  projectId: "demo-project",
-  storageBucket: "demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "demo-app-id",
-  measurementId: "G-DEMO"
+  apiKey: "AIzaSyAL9rMO4HOIhbLttVb8FeT9X20eXxO2cWs",
+  authDomain: "cleopatra-7b03b.firebaseapp.com",
+  projectId: "cleopatra-7b03b",
+  storageBucket: "cleopatra-7b03b.firebasestorage.app",
+  messagingSenderId: "122861877579",
+  appId: "1:122861877579:web:3bdda167a1cc18347510ce",
+  measurementId: "G-5PR3W3E7G4"
 };
-
-// Check if Firebase is properly configured
-const isFirebaseConfigured = process.env.REACT_APP_FIREBASE_PROJECT_ID && 
-  process.env.REACT_APP_FIREBASE_PROJECT_ID !== 'your-project-id';
-
-if (isFirebaseConfigured) {
-  firebaseConfig.apiKey = process.env.REACT_APP_FIREBASE_API_KEY!;
-  firebaseConfig.authDomain = process.env.REACT_APP_FIREBASE_AUTH_DOMAIN!;
-  firebaseConfig.projectId = process.env.REACT_APP_FIREBASE_PROJECT_ID!;
-  firebaseConfig.storageBucket = process.env.REACT_APP_FIREBASE_STORAGE_BUCKET!;
-  firebaseConfig.messagingSenderId = process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID!;
-  firebaseConfig.appId = process.env.REACT_APP_FIREBASE_APP_ID!;
-  firebaseConfig.measurementId = process.env.REACT_APP_FIREBASE_MEASUREMENT_ID!;
-}
 
 // Initialize Firebase
 let app: any = null;
@@ -36,19 +22,19 @@ let auth: any = null;
 
 try {
   app = initializeApp(firebaseConfig);
-  
-  // Only initialize services if Firebase is properly configured
-  if (isFirebaseConfigured) {
-    db = getFirestore(app);
-    storage = getStorage(app);
-    auth = getAuth(app);
-  } else {
-    console.log('Firebase not configured - using demo mode');
-  }
+  db = getFirestore(app);
+  storage = getStorage(app);
+  auth = getAuth(app);
+  console.log('🔥 Firebase conectado exitosamente a:', firebaseConfig.projectId);
+  console.log('📊 Base de datos Firestore lista');
+  console.log('📁 Storage configurado');
 } catch (error) {
-  console.log('Firebase initialization failed - using demo mode');
+  console.error('❌ Error al conectar Firebase:', error);
+  console.log('📱 Usando modo local como respaldo');
+  db = null;
+  storage = null;
+  auth = null;
 }
 
 export { db, storage, auth };
-
 export default app;

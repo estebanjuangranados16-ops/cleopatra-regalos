@@ -1,17 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-import { User } from '../types/user';
-import { authService } from '../services/authService';
+import { User as FirebaseUser } from 'firebase/auth';
+import { authService, UserProfile } from '../services/authService';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
+  firebaseUser: FirebaseUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  updateProfile: (updates: Partial<User>) => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -26,67 +24,78 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-    }
-    setIsLoading(false);
+    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
+      setFirebaseUser(firebaseUser);
+      
+      if (firebaseUser) {
+        try {
+          const userProfile = await authService.getUserProfile(firebaseUser.uid);
+          setUser(userProfile);
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const loggedUser = await authService.loginWithEmail(email, password);
-      setUser(loggedUser);
+      setIsLoading(true);
+      const userProfile = await authService.signIn(email, password);
+      setUser(userProfile);
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
-    setIsLoading(true);
+  const register = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
-      const newUser = await authService.registerWithEmail(email, password, name);
-      setUser(newUser);
+      setIsLoading(true);
+      const userProfile = await authService.signUp(email, password, name);
+      setUser(userProfile);
+      return true;
+    } catch (error) {
+      console.error('Register error:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loginWithGoogle = async () => {
-    setIsLoading(true);
+  const logout = async (): Promise<void> => {
     try {
-      const googleUser = await authService.loginWithGoogle();
-      setUser(googleUser);
-    } finally {
-      setIsLoading(false);
+      await authService.signOut();
+      setUser(null);
+      setFirebaseUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
     }
-  };
-
-  const logout = async () => {
-    await authService.logout();
-    setUser(null);
-  };
-
-  const updateProfile = async (updates: Partial<User>) => {
-    if (!user) return;
-    const updatedUser = await authService.updateProfile(updates);
-    setUser(updatedUser);
   };
 
   const value = {
     user,
+    firebaseUser,
     isLoading,
     isAuthenticated: !!user,
     login,
     register,
-    loginWithGoogle,
     logout,
-    updateProfile,
     isAdmin: user?.role === 'admin'
   };
 

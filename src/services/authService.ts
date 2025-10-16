@@ -1,202 +1,136 @@
-import { User } from '../types/user';
-import { timingSafeEqual } from '../utils/security';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User,
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 
-class AuthService {
-  private users: User[] = [];
-  private currentUser: User | null = null;
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'admin' | 'customer';
+  createdAt: string;
+  lastLogin: string;
+}
 
-  constructor() {
-    this.loadFromStorage();
-    this.initializeAdminUser();
-  }
-
-  private initializeAdminUser() {
-    // Crear usuario admin por defecto si no existe
-    const adminExists = this.users.find(u => u.email === 'admin@cleopatra.com');
-    if (!adminExists) {
-      const adminUser: User = {
-        id: 'admin_001',
-        email: 'admin@cleopatra.com',
-        name: 'Administrador',
-        role: 'admin',
-        provider: 'email',
-        verified: true,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        preferences: {
-          notifications: true,
-          newsletter: false,
-          theme: 'tech'
-        }
-      };
-      this.users.push(adminUser);
-      this.saveToStorage();
+export const authService = {
+  // Iniciar sesión
+  async signIn(email: string, password: string): Promise<UserProfile> {
+    if (!auth || !db) {
+      throw new Error('Firebase no configurado');
     }
-  }
 
-  async loginWithEmail(email: string, password: string): Promise<User> {
-    // Credenciales específicas para admin
-    if (email === 'admin@cleopatra.com' && timingSafeEqual(password, 'admin123')) {
-      let adminUser = this.users.find(u => u.email === email);
-      if (!adminUser) {
-        // Crear admin si no existe
-        adminUser = {
-          id: 'admin_001',
-          email: 'admin@cleopatra.com',
-          name: 'Administrador',
-          role: 'admin',
-          provider: 'email',
-          verified: true,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          preferences: {
-            notifications: true,
-            newsletter: false,
-            theme: 'tech'
-          }
-        };
-        this.users.push(adminUser);
-      }
-      
-      adminUser.lastLogin = new Date().toISOString();
-      this.currentUser = adminUser;
-      this.saveToStorage();
-      return adminUser;
-    }
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
     
-    const user = this.users.find(u => u.email === email);
-    if (!user) {
+    // Actualizar último login
+    await setDoc(doc(db, 'users', user.uid), {
+      lastLogin: new Date().toISOString()
+    }, { merge: true });
+    
+    return await this.getUserProfile(user.uid);
+  },
+
+  // Registrar usuario
+  async signUp(email: string, password: string, displayName: string): Promise<UserProfile> {
+    if (!auth || !db) {
+      throw new Error('Firebase no configurado');
+    }
+
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Actualizar perfil
+    await updateProfile(user, { displayName });
+    
+    // Crear documento de usuario
+    const userProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email!,
+      displayName,
+      role: 'customer', // Por defecto customer
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString()
+    };
+    
+    await setDoc(doc(db, 'users', user.uid), userProfile);
+    
+    return userProfile;
+  },
+
+  // Cerrar sesión
+  async signOut(): Promise<void> {
+    if (!auth) {
+      throw new Error('Firebase no configurado');
+    }
+    await signOut(auth);
+  },
+
+  // Obtener perfil de usuario
+  async getUserProfile(uid: string): Promise<UserProfile> {
+    if (!db) {
+      throw new Error('Firebase no configurado');
+    }
+
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (!userDoc.exists()) {
       throw new Error('Usuario no encontrado');
     }
     
-    // Simular verificación de contraseña para usuarios normales
-    if (password.length < 6) {
-      throw new Error('Contraseña incorrecta');
+    return userDoc.data() as UserProfile;
+  },
+
+  // Verificar si es admin
+  async isAdmin(uid: string): Promise<boolean> {
+    try {
+      const profile = await this.getUserProfile(uid);
+      return profile.role === 'admin';
+    } catch {
+      return false;
+    }
+  },
+
+  // Crear admin (solo para setup inicial)
+  async createAdmin(email: string, password: string, displayName: string): Promise<UserProfile> {
+    if (!auth || !db) {
+      throw new Error('Firebase no configurado');
     }
 
-    user.lastLogin = new Date().toISOString();
-    this.currentUser = user;
-    this.saveToStorage();
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
     
-    return user;
-  }
-
-  async registerWithEmail(email: string, password: string, name: string): Promise<User> {
-    if (this.users.find(u => u.email === email)) {
-      throw new Error('El email ya está registrado');
-    }
-
-    const user: User = {
-      id: Date.now().toString(),
-      email,
-      name,
-      role: 'user',
-      provider: 'email',
-      verified: false,
+    await updateProfile(user, { displayName });
+    
+    const adminProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email!,
+      displayName,
+      role: 'admin',
       createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-      preferences: {
-        notifications: true,
-        newsletter: true,
-        theme: 'gifts'
-      }
+      lastLogin: new Date().toISOString()
     };
-
-    this.users.push(user);
-    this.currentUser = user;
-    this.saveToStorage();
     
-    return user;
-  }
+    await setDoc(doc(db, 'users', user.uid), adminProfile);
+    
+    return adminProfile;
+  },
 
-  async loginWithGoogle(): Promise<User> {
-    // Simular login con Google
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const user: User = {
-          id: 'google_' + Date.now(),
-          email: 'usuario@gmail.com',
-          name: 'Usuario Google',
-          avatar: 'https://via.placeholder.com/100',
-          role: 'user',
-          provider: 'google',
-          verified: true,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          preferences: {
-            notifications: true,
-            newsletter: true,
-            theme: 'tech'
-          }
-        };
+  // Escuchar cambios de autenticación
+  onAuthStateChanged(callback: (user: User | null) => void) {
+    if (!auth) {
+      callback(null);
+      return () => {};
+    }
+    return onAuthStateChanged(auth, callback);
+  },
 
-        // Verificar si ya existe
-        const existingUser = this.users.find(u => u.email === user.email);
-        if (existingUser) {
-          existingUser.lastLogin = new Date().toISOString();
-          this.currentUser = existingUser;
-        } else {
-          this.users.push(user);
-          this.currentUser = user;
-        }
-        
-        this.saveToStorage();
-        resolve(this.currentUser);
-      }, 1000);
-    });
-  }
-
-  async logout(): Promise<void> {
-    this.currentUser = null;
-    localStorage.removeItem('cleopatra_current_user');
-  }
-
+  // Obtener usuario actual
   getCurrentUser(): User | null {
-    if (!this.currentUser) {
-      const stored = localStorage.getItem('cleopatra_current_user');
-      if (stored) {
-        this.currentUser = JSON.parse(stored);
-      }
-    }
-    return this.currentUser;
+    return auth?.currentUser || null;
   }
-
-  async updateProfile(updates: Partial<User>): Promise<User> {
-    if (!this.currentUser) {
-      throw new Error('No hay usuario autenticado');
-    }
-
-    const updatedUser = { ...this.currentUser, ...updates };
-    const userIndex = this.users.findIndex(u => u.id === this.currentUser!.id);
-    
-    if (userIndex !== -1) {
-      this.users[userIndex] = updatedUser;
-    }
-    
-    this.currentUser = updatedUser;
-    this.saveToStorage();
-    
-    return updatedUser;
-  }
-
-  private saveToStorage(): void {
-    localStorage.setItem('cleopatra_users', JSON.stringify(this.users));
-    if (this.currentUser) {
-      localStorage.setItem('cleopatra_current_user', JSON.stringify(this.currentUser));
-    }
-  }
-
-  private loadFromStorage(): void {
-    const storedUsers = localStorage.getItem('cleopatra_users');
-    if (storedUsers) {
-      this.users = JSON.parse(storedUsers);
-    }
-
-    const storedCurrentUser = localStorage.getItem('cleopatra_current_user');
-    if (storedCurrentUser) {
-      this.currentUser = JSON.parse(storedCurrentUser);
-    }
-  }
-}
-
-export const authService = new AuthService();
+};

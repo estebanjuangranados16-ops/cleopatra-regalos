@@ -78,23 +78,6 @@ export const optimizeWebVitals = () => {
 
 // Performance observer para métricas adicionales
 export const observePerformance = () => {
-  if ('PerformanceObserver' in window) {
-    // Observar recursos lentos
-    const resourceObserver = new PerformanceObserver((list) => {
-      list.getEntries().forEach((entry) => {
-        if (entry.duration > 1000) {
-          console.warn('Slow resource detected:', entry.name, entry.duration + 'ms');
-        }
-      });
-    });
-    resourceObserver.observe({ entryTypes: ['resource'] });
-
-    // Observar long tasks
-    const longTaskObserver = new PerformanceObserver((list) => {
-      list.getEntries().forEach((entry) => {
-        console.warn('Long task detected:', entry.duration + 'ms');
-      });
-    });
-    longTaskObserver.observe({ entryTypes: ['longtask'] });
-  }
+  // Disabled to reduce console noise during development
+  // Re-enable for production monitoring if needed
 };

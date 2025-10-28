@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useOrderStore, OrderItem, ShippingInfo } from '../store/orderStore';
 import { paymentService, PaymentMethod, PaymentRequest } from '../services/paymentService';
 import { mockPaymentService } from '../services/mockPaymentService';
+import { inventoryService } from '../services/inventoryService';
 
 // Use mock service in development
 const activePaymentService = process.env.NODE_ENV === 'development' ? mockPaymentService : paymentService;
@@ -45,6 +46,16 @@ const WompiCheckout: React.FC<WompiCheckoutProps> = ({
   const handlePayment = async () => {
     try {
       setIsProcessing(true);
+
+      // Verificar stock antes de procesar el pago
+      for (const item of items) {
+        const hasStock = inventoryService.isInStock(item.id, item.quantity);
+        if (!hasStock) {
+          const inventory = inventoryService.getProductInventory(item.id);
+          const available = inventory?.available || 0;
+          throw new Error(`Stock insuficiente para ${item.name}. Disponible: ${available}, Solicitado: ${item.quantity}`);
+        }
+      }
 
       const orderId = createOrder(items, shippingInfo, 'wompi');
       

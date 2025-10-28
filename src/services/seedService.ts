@@ -2,6 +2,7 @@ import { collection, addDoc, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { MediaItem } from './hybridGalleryService';
+import { inventoryService } from './inventoryService';
 
 // Productos de ejemplo para la base de datos
 const sampleProducts: Omit<Product, 'id'>[] = [
@@ -134,32 +135,53 @@ const sampleGalleryItems: Omit<MediaItem, 'id'>[] = [
 ];
 
 export const seedService = {
-  // Inicializar productos en Firebase
+  // Inicializar productos en Firebase o localStorage
   async seedProducts(): Promise<void> {
-    if (!db) {
-      console.log('Firebase no disponible - usando datos locales');
-      return;
-    }
-
     try {
-      console.log('Verificando productos existentes...');
-      const productsRef = collection(db, 'products');
-      const snapshot = await getDocs(productsRef);
-      
-      if (snapshot.empty) {
-        console.log('No hay productos - creando productos de ejemplo...');
+      // Intentar Firebase primero
+      if (db) {
+        console.log('Verificando productos en Firebase...');
+        const productsRef = collection(db, 'products');
+        const snapshot = await getDocs(productsRef);
         
-        for (const product of sampleProducts) {
-          await addDoc(productsRef, product);
-          console.log(`Producto creado: ${product.name}`);
+        if (snapshot.empty) {
+          console.log('No hay productos en Firebase - creando productos de ejemplo...');
+          
+          for (const product of sampleProducts) {
+            await addDoc(productsRef, product);
+            console.log(`Producto creado en Firebase: ${product.name}`);
+          }
+          
+          console.log(`✅ ${sampleProducts.length} productos creados en Firebase`);
+          return;
+        } else {
+          console.log(`✅ Ya existen ${snapshot.size} productos en Firebase`);
+          return;
         }
-        
-        console.log(`✅ ${sampleProducts.length} productos creados exitosamente`);
-      } else {
-        console.log(`✅ Ya existen ${snapshot.size} productos en la base de datos`);
       }
     } catch (error) {
-      console.error('Error al crear productos:', error);
+      console.log('Firebase no disponible, usando localStorage');
+    }
+
+    // Usar localStorage como fallback
+    try {
+      const { productService } = await import('./productService');
+      const existingProducts = await productService.getProducts();
+      
+      if (existingProducts.length === 0) {
+        console.log('No hay productos locales - creando productos de ejemplo...');
+        
+        for (const product of sampleProducts) {
+          await productService.addProduct(product);
+          console.log(`Producto creado localmente: ${product.name}`);
+        }
+        
+        console.log(`✅ ${sampleProducts.length} productos creados localmente`);
+      } else {
+        console.log(`✅ Ya existen ${existingProducts.length} productos localmente`);
+      }
+    } catch (error) {
+      console.error('Error creando productos:', error);
       throw error;
     }
   },
@@ -194,6 +216,56 @@ export const seedService = {
     }
   },
 
+  // Crear usuario admin por defecto
+  async createDefaultAdmin(): Promise<void> {
+    if (!db) {
+      console.log('Firebase no disponible - admin local');
+      return;
+    }
+
+    try {
+      const adminRef = doc(db, 'users', 'admin-default');
+      await setDoc(adminRef, {
+        id: 'admin-default',
+        uid: 'admin-default',
+        email: 'admin@cleopatra.com',
+        name: 'Administrador',
+        displayName: 'Administrador',
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      });
+      console.log('✅ Usuario admin por defecto creado');
+    } catch (error) {
+      console.log('Admin ya existe o error:', error instanceof Error ? error.message : String(error));
+    }
+  },
+
+  // Inicializar inventario para productos existentes
+  async initializeInventory(): Promise<void> {
+    console.log('📦 Inicializando inventario...');
+    
+    try {
+      // Obtener productos desde localStorage o Firebase
+      const { productService } = await import('./productService');
+      const products = await productService.getProducts();
+      
+      // Inicializar inventario para cada producto
+      for (const product of products) {
+        const existingInventory = inventoryService.getProductInventory(String(product.id));
+        if (!existingInventory) {
+          const stock = product.stock || 10; // Stock por defecto si no está definido
+          inventoryService.initializeProduct(String(product.id), stock, 3);
+          console.log(`Inventario inicializado para ${product.name}: ${stock} unidades`);
+        }
+      }
+      
+      console.log('✅ Inventario inicializado correctamente');
+    } catch (error) {
+      console.error('❌ Error inicializando inventario:', error);
+    }
+  },
+
   // Inicializar todo
   async initializeData(): Promise<void> {
     console.log('🚀 Inicializando datos de Cleopatra Regalos...');
@@ -201,6 +273,8 @@ export const seedService = {
     try {
       await this.seedProducts();
       await this.seedGallery();
+      await this.createDefaultAdmin();
+      await this.initializeInventory(); // Inicializar inventario después de productos
       console.log('✅ Inicialización completada exitosamente');
     } catch (error) {
       console.error('❌ Error durante la inicialización:', error);

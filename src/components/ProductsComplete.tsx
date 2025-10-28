@@ -26,23 +26,14 @@ const ProductsComplete: React.FC = () => {
     try {
       const { productService } = await import('../services/productService');
       const data = await productService.getProducts();
-      console.log('Products loaded from Firebase:', data);
-      console.log('Number of products:', data.length);
       
-      // Verificar formato de productos
-      data.forEach((product, index) => {
-        console.log(`Product ${index}:`, {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          images: product.images,
-          category: product.category,
-          description: product.description
-        });
-      });
-      
-      setProducts(data);
+      if (data.length > 0) {
+        console.log(`✅ ${data.length} productos cargados exitosamente`);
+        setProducts(data);
+      } else {
+        console.log('⚠️ No se encontraron productos');
+        setProducts([]);
+      }
     } catch (error) {
       console.error('Error loading products:', error);
       setProducts([]);
@@ -56,8 +47,6 @@ const ProductsComplete: React.FC = () => {
   }, []);
 
   const displayProducts = products.slice(0, 6);
-  console.log('Display products:', displayProducts);
-  console.log('All products state:', products);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);

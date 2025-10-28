@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, X, Upload, Image as ImageIcon, AlertCircle, Camera, Folder } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useNotification } from '../../hooks/useNotification';
 
 
 
@@ -25,6 +26,7 @@ interface ProductFormProps {
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
   const { colors } = useTheme();
+  const { showProductSaved, showError } = useNotification();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -122,14 +124,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
   };
 
   const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      // Timeout after 10 seconds
+      const timeout = setTimeout(() => {
+        reject(new Error('Image compression timeout'));
+      }, 10000);
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const img = new Image();
       
       img.onload = () => {
-        const maxWidth = 800;
-        const maxHeight = 600;
+        clearTimeout(timeout);
+        const maxWidth = 400; // Reduced size for faster processing
+        const maxHeight = 300;
         let { width, height } = img;
         
         if (width > height) {
@@ -147,21 +155,41 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
+        resolve(canvas.toDataURL('image/jpeg', 0.5)); // Lower quality for smaller size
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Image load failed'));
       };
       
       const reader = new FileReader();
       reader.onload = (e) => {
         img.src = e.target?.result as string;
       };
+      reader.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('File read failed'));
+      };
       reader.readAsDataURL(file);
     });
   };
 
   const handleFileUpload = async (file: File) => {
+    const { imageOptimizationService } = await import('../../services/imageOptimizationService');
+    
+    // Validar archivo
+    const validation = imageOptimizationService.validateImageFile(file);
+    if (!validation.valid) {
+      setErrors({ ...errors, images: validation.error || 'Archivo inválido' });
+      return;
+    }
+
     setUploading(true);
+    setErrors({ ...errors, images: '' });
+    
     try {
-      const compressedDataUrl = await compressImage(file);
+      const compressedDataUrl = await imageOptimizationService.compressToBase64(file);
       if (compressedDataUrl && !formData.images.includes(compressedDataUrl)) {
         const updatedImages = [...formData.images, compressedDataUrl];
         setFormData({ ...formData, images: updatedImages });
@@ -169,6 +197,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
       }
     } catch (error) {
       console.error('Error uploading file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error al procesar la imagen';
+      setErrors({ ...errors, images: errorMessage });
     } finally {
       setUploading(false);
     }
@@ -215,23 +245,39 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
       
       const productData = {
         name: formData.name.trim(),
-        price: `$${Number(formData.price).toLocaleString()}`,
+        price: Number(formData.price),
         category: formData.category === 'gifts' ? 'regalos' : 'tecnologia',
         image: formData.images[0] || 'https://via.placeholder.com/300x200',
         images: formData.images,
-        description: formData.description.trim()
+        description: formData.description.trim(),
+        stock: 10,
+        featured: false
       } as any;
 
+      let productId: string;
       if (product) {
         await productService.updateProduct(product.id.toString(), productData);
+        productId = product.id.toString();
       } else {
-        await productService.addProduct(productData);
+        productId = await productService.addProduct(productData);
       }
 
+      // Inicializar inventario para el producto
+      const { inventoryService } = await import('../../services/inventoryService');
+      const existingInventory = inventoryService.getProductInventory(productId);
+      if (!existingInventory) {
+        inventoryService.initializeProduct(productId, productData.stock || 10, 3);
+      }
+
+      // Mostrar notificación de éxito
+      setErrors({ submit: '' });
+      showProductSaved(productData.name, !!product);
       onSave();
     } catch (error) {
       console.error('Error saving product:', error);
-      setErrors({ submit: 'Error al guardar el producto. Inténtalo de nuevo.' });
+      const errorMessage = 'Error al guardar el producto. Inténtalo de nuevo.';
+      setErrors({ submit: errorMessage });
+      showError('Error al guardar', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -239,16 +285,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
 
   const suggestedImages = {
     tech: [
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
-      'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400'
+      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=300&q=80&fm=webp'
     ],
     gifts: [
-      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400',
-      'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
-      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400',
-      'https://images.unsplash.com/photo-1549062572-544a64fb0c56?w=400'
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=300&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=300&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1549062572-544a64fb0c56?w=300&q=80&fm=webp'
     ]
   };
 
@@ -387,8 +433,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
                     disabled={uploading}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors disabled:opacity-50"
                   >
-                    <Folder className="w-5 h-5" />
-                    {uploading ? 'Subiendo...' : 'Subir Archivos'}
+                    {uploading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        <span>Procesando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Folder className="w-5 h-5" />
+                        <span>Subir Archivos</span>
+                      </>
+                    )}
                   </button>
                   
                   <button
@@ -440,6 +495,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
                           src={url}
                           alt={`Preview ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg==';
+                          }}
                         />
                         <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
                           {index + 1}

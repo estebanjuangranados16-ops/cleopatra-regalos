@@ -14,6 +14,8 @@ import {
   Settings
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useConfirm } from '../../hooks/useConfirm';
+import ConfirmDialog from '../ConfirmDialog';
 
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
@@ -41,6 +43,7 @@ interface Product {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   const { colors } = useTheme();
+  const { confirmState, confirmDelete, confirm, handleConfirm, handleCancel } = useConfirm();
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -88,7 +91,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+    const product = products.find(p => p.id === productId);
+    const confirmed = await confirmDelete(product?.name || 'este producto');
+    
+    if (!confirmed) return;
     
     try {
       const { productService } = await import('../../services/productService');
@@ -202,13 +208,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
               </div>
               
               {activeTab === 'products' && (
-                <button
-                  onClick={() => setActiveTab('add')}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Nuevo Producto
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      const confirmed = await confirm({
+                        title: 'Reinicializar productos',
+                        message: '¿Estás seguro de que quieres reinicializar con productos de ejemplo? Esto puede afectar los productos existentes.',
+                        type: 'warning',
+                        confirmText: 'Reinicializar',
+                        cancelText: 'Cancelar'
+                      });
+                      
+                      if (confirmed) {
+                        const { seedService } = await import('../../services/seedService');
+                        await seedService.seedProducts();
+                        await loadProducts();
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    <Package className="w-4 h-4" />
+                    Seed
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('add')}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Nuevo Producto
+                  </button>
+                </div>
               )}
             </div>
 
@@ -289,6 +318,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
       </motion.div>
+      
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        type={confirmState.type}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </div>
   );
 };

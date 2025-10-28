@@ -13,11 +13,14 @@ import SEOHead from './components/SEOHead';
 import SEOHelmet from './components/SEOHelmet';
 import { analyticsService } from './services/analyticsService';
 import { seedService } from './services/seedService';
+import { inventoryFix } from './utils/inventoryFix';
 // Componentes críticos - no lazy
 import Toast from './components/Toast';
 import WhatsAppButton from './components/WhatsAppButton';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import ThemeToggleButton from './components/ThemeToggleButton';
+import ConfirmProvider from './components/ConfirmProvider';
+import InventoryDebugger from './components/InventoryDebugger';
 
 
 // Critical components - no lazy for LCP
@@ -130,10 +133,23 @@ const App: React.FC = () => {
     // Track initial page view
     analyticsService.trackPageView(window.location.pathname, document.title);
     
-    // Initialize Firebase data
-    seedService.initializeData().catch(error => {
-      console.log('Datos inicializados en modo local:', error.message);
-    });
+    // Initialize Firebase data with timeout
+    const initTimeout = setTimeout(() => {
+      console.log('Firebase inicialización tomando mucho tiempo - continuando en modo local');
+    }, 5000);
+    
+    seedService.initializeData()
+      .then(() => {
+        clearTimeout(initTimeout);
+        // Hacer disponible la utilidad de inventario en desarrollo
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🛠️ Utilidad de inventario disponible: inventoryFix.resetInventory()');
+        }
+      })
+      .catch(error => {
+        clearTimeout(initTimeout);
+        console.log('Datos inicializados en modo local:', error.message);
+      });
     
     // Registrar Service Worker para PWA
     if ('serviceWorker' in navigator) {
@@ -154,6 +170,7 @@ const App: React.FC = () => {
       <HelmetProvider>
         <AuthProvider>
           <ThemeProvider>
+            <ConfirmProvider>
             <Router>
               <div className="App">
                 <SEOHead />
@@ -177,10 +194,12 @@ const App: React.FC = () => {
                 <Toast />
                 <WhatsAppButton />
                 <ThemeToggleButton />
+                <InventoryDebugger />
 
                 <PWAInstallPrompt />
               </div>
             </Router>
+            </ConfirmProvider>
           </ThemeProvider>
         </AuthProvider>
       </HelmetProvider>

@@ -63,12 +63,9 @@ const fallbackGalleryItems: MediaItem[] = [
 export const hybridGalleryService = {
   // Obtener todos los items
   async getItems(): Promise<MediaItem[]> {
-    console.log('🇫️ Cargando galería...');
-    
     // Intentar Firebase primero
     if (db) {
       try {
-        console.log('📡 Conectando a Firebase para galería...');
         let q;
         try {
           q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
@@ -90,7 +87,7 @@ export const hybridGalleryService = {
           return items;
         }
       } catch (error) {
-        console.log('⚠️ Firebase no disponible para galería, usando almacenamiento local');
+        // Silently fallback to localStorage
       }
     }
     
@@ -99,7 +96,6 @@ export const hybridGalleryService = {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const items = JSON.parse(stored);
-        console.log(`📱 ${items.length} items de galería cargados desde localStorage`);
         return items;
       }
     } catch (error) {
@@ -107,7 +103,6 @@ export const hybridGalleryService = {
     }
     
     // Usar items de ejemplo como último recurso
-    console.log('🎯 Usando items de galería de ejemplo');
     localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackGalleryItems));
     return fallbackGalleryItems;
   },
@@ -124,7 +119,7 @@ export const hybridGalleryService = {
       try {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), itemData);
         const newItem = { ...itemData, id: docRef.id };
-        console.log('Gallery item added to Firebase:', docRef.id);
+        // Item added to Firebase
         return newItem;
       } catch (error) {
         console.log('Firebase not available, using localStorage');

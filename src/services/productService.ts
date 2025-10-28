@@ -55,12 +55,21 @@ const fallbackProducts: Product[] = [
 
 export const productService = {
   async getProducts(): Promise<Product[]> {
-    console.log('🔍 Cargando productos...');
+    // Usar localStorage como fuente principal para desarrollo
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const products = JSON.parse(stored);
+        console.log(`✅ ${products.length} productos cargados desde localStorage`);
+        return products;
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
     
-    // Intentar Firebase primero
+    // Intentar Firebase solo si localStorage está vacío
     if (db) {
       try {
-        console.log('📡 Conectando a Firebase...');
         let q;
         try {
           q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
@@ -74,15 +83,13 @@ export const productService = {
           ...doc.data()
         })) as Product[];
         
-        console.log(`✅ ${products.length} productos cargados desde Firebase`);
-        
-        // Guardar en localStorage como caché
         if (products.length > 0) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+          console.log(`✅ ${products.length} productos cargados desde Firebase`);
           return products;
         }
       } catch (error) {
-        console.log('⚠️ Firebase no disponible, usando almacenamiento local');
+        console.log('Firebase no disponible, usando datos locales');
       }
     }
     
@@ -91,7 +98,7 @@ export const productService = {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const products = JSON.parse(stored);
-        console.log(`📱 ${products.length} productos cargados desde localStorage`);
+        // Products loaded from localStorage
         return products;
       }
     } catch (error) {
@@ -99,7 +106,7 @@ export const productService = {
     }
     
     // Usar productos de ejemplo como último recurso
-    console.log('🎯 Usando productos de ejemplo');
+    // Using fallback products
     localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackProducts));
     return fallbackProducts;
   },
@@ -111,24 +118,20 @@ export const productService = {
       updatedAt: new Date().toISOString()
     };
     
-    // Intentar Firebase primero
-    if (db) {
-      try {
-        const docRef = await addDoc(collection(db, COLLECTION_NAME), productData);
-        console.log('Product added to Firebase:', docRef.id);
-        return docRef.id;
-      } catch (error) {
-        console.log('Firebase not available, using localStorage');
-      }
-    }
-    
-    // Usar localStorage como fallback
+    // Usar localStorage como fuente principal
     const products = await this.getProducts();
     const newId = Date.now().toString();
     const newProduct = { ...productData, id: newId };
     const updatedProducts = [...products, newProduct];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProducts));
-    return newId;
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProducts));
+      console.log(`✅ Producto agregado: ${newProduct.name}`);
+      return newId;
+    } catch (error) {
+      console.error('Error saving product:', error);
+      throw new Error('No se pudo guardar el producto');
+    }
   },
 
   async updateProduct(id: string, product: Partial<Product>): Promise<void> {
@@ -137,43 +140,19 @@ export const productService = {
       updatedAt: new Date().toISOString()
     };
     
-    // Intentar Firebase primero
-    if (db) {
-      try {
-        const docRef = doc(db, COLLECTION_NAME, id);
-        await updateDoc(docRef, updateData);
-        console.log('Product updated in Firebase:', id);
-        return;
-      } catch (error) {
-        console.log('Firebase not available, using localStorage');
-      }
-    }
-    
-    // Usar localStorage como fallback
     const products = await this.getProducts();
     const updatedProducts = products.map(p => 
       p.id === id ? { ...p, ...updateData } : p
     );
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProducts));
+    console.log(`✅ Producto actualizado: ${id}`);
   },
 
   async deleteProduct(id: string): Promise<void> {
-    // Intentar Firebase primero
-    if (db) {
-      try {
-        const docRef = doc(db, COLLECTION_NAME, id);
-        await deleteDoc(docRef);
-        console.log('Product deleted from Firebase:', id);
-        return;
-      } catch (error) {
-        console.log('Firebase not available, using localStorage');
-      }
-    }
-    
-    // Usar localStorage como fallback
     const products = await this.getProducts();
     const filteredProducts = products.filter(p => p.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredProducts));
+    console.log(`✅ Producto eliminado: ${id}`);
   },
 
   async testConnection(): Promise<boolean> {

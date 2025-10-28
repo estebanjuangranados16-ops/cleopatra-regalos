@@ -336,9 +336,8 @@ const Gallery: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('Loading gallery items from Firestore...');
         const items = await hybridGalleryService.getItems();
-        console.log('Gallery items loaded:', items);
+        console.log(`✅ ${items.length} items de galería cargados`);
         setGalleryItems(items);
       } catch (error) {
         console.error('Error loading gallery items:', error);

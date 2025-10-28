@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product } from '../types';
-import { ToastType } from '../components/Toast';
+import type { ToastType } from '../components/Toast';
 import { inventoryService } from '../services/inventoryService';
 import { analyticsService } from '../services/analyticsService';
 
@@ -16,6 +16,7 @@ interface StoreState {
   removeFromCart: (productId: string | number) => void;
   updateQuantity: (productId: string | number, quantity: number) => void;
   clearCart: () => void;
+  buyNow: (product: Product) => void;
   getCartTotal: () => number;
   getCartItemsCount: () => number;
 
@@ -92,15 +93,13 @@ export const useStore = create<StoreState>()(persist((set, get) => ({
       analyticsService.trackAddToCart(product);
       
       // Add toast notification
-      const toast = {
-        type: 'success' as const,
-        title: 'Producto agregado',
-        message: `${product.name} se agregó al carrito`,
-        icon: 'cart' as const
-      };
-      
       setTimeout(() => {
-        get().addToast(toast);
+        get().addToast({
+          type: 'success',
+          title: 'Agregado al carrito',
+          message: `${product.name} se agregó al carrito`,
+          icon: 'cart'
+        });
       }, 100);
       
       return { cart: [...state.cart, { ...product, quantity: 1 }] };
@@ -124,6 +123,35 @@ export const useStore = create<StoreState>()(persist((set, get) => ({
         )
   })),
   clearCart: () => set({ cart: [] }),
+  buyNow: (product) => {
+    // Check inventory
+    if (!inventoryService.isInStock(String(product.id), 1)) {
+      get().addToast({
+        type: 'error',
+        title: 'Sin stock',
+        message: 'Este producto no está disponible'
+      });
+      return;
+    }
+
+    // Clear cart and add only this product
+    set({ cart: [{ ...product, quantity: 1 }] });
+    
+    // Track add to cart
+    analyticsService.trackAddToCart(product);
+    
+    // Add toast notification
+    const toast = {
+      type: 'success' as const,
+      title: 'Producto agregado',
+      message: `${product.name} listo para comprar`,
+      icon: 'cart' as const
+    };
+    
+    setTimeout(() => {
+      get().addToast(toast);
+    }, 100);
+  },
   getCartTotal: () => {
     const { cart } = get();
     return cart.reduce((total, item) => {
@@ -142,15 +170,13 @@ export const useStore = create<StoreState>()(persist((set, get) => ({
   favorites: [],
   addToFavorites: (product) => set((state) => {
     // Add toast notification
-    const toast = {
-      type: 'success' as const,
-      title: 'Agregado a favoritos',
-      message: `${product.name} se agregó a tus favoritos`,
-      icon: 'heart' as const
-    };
-    
     setTimeout(() => {
-      get().addToast(toast);
+      get().addToast({
+        type: 'success',
+        title: 'Agregado a favoritos',
+        message: `${product.name} se agregó a favoritos`,
+        icon: 'heart'
+      });
     }, 100);
     
     return { favorites: [...state.favorites, product] };
@@ -159,15 +185,13 @@ export const useStore = create<StoreState>()(persist((set, get) => ({
     const product = state.favorites.find(item => item.id === productId);
     
     if (product) {
-      const toast = {
-        type: 'info' as const,
-        title: 'Removido de favoritos',
-        message: `${product.name} se removió de favoritos`,
-        icon: 'heart' as const
-      };
-      
       setTimeout(() => {
-        get().addToast(toast);
+        get().addToast({
+          type: 'info',
+          title: 'Removido de favoritos',
+          message: `${product.name} se removió de favoritos`,
+          icon: 'heart'
+        });
       }, 100);
     }
     
@@ -212,6 +236,16 @@ export const useStore = create<StoreState>()(persist((set, get) => ({
     try {
       const { productService } = await import('../services/productService');
       const products = await productService.getProducts();
+      
+      // Inicializar inventario para productos que no lo tengan
+      for (const product of products) {
+        const existingInventory = inventoryService.getProductInventory(String(product.id));
+        if (!existingInventory) {
+          const stock = product.stock || 10;
+          inventoryService.initializeProduct(String(product.id), stock, 3);
+        }
+      }
+      
       set({ products, loading: false });
     } catch (error) {
       console.error('Error loading products:', error);

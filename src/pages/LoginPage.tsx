@@ -28,11 +28,14 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/');
+      const success = await login(formData.email, formData.password);
+      if (success) {
+        navigate('/admin');
+      } else {
+        setError('Credenciales incorrectas');
+      }
     } catch (err: any) {
-      setError(err.message || 'Credenciales incorrectas');
-      setError('Error al iniciar sesión');
+      setError('Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
       setLoading(false);
     }
@@ -117,12 +120,30 @@ const LoginPage: React.FC = () => {
           </motion.button>
         </form>
 
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-900 mb-2">Credenciales de prueba:</h3>
-          <div className="text-sm text-gray-600 space-y-1">
-            <p><strong>Email:</strong> admin@cleopatra.com</p>
-            <p><strong>Contraseña:</strong> admin123</p>
+        <div className="mt-8 p-4 rounded-lg border-2 border-dashed" style={{ borderColor: colors.primary, backgroundColor: `${colors.primary}10` }}>
+          <h3 className="font-bold mb-3" style={{ color: colors.primary }}>
+            🔑 Credenciales de Prueba
+          </h3>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2 bg-white rounded border">
+              <span className="text-sm font-medium">Email:</span>
+              <code className="text-sm bg-gray-100 px-2 py-1 rounded">admin@cleopatra.com</code>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-white rounded border">
+              <span className="text-sm font-medium">Contraseña:</span>
+              <code className="text-sm bg-gray-100 px-2 py-1 rounded">admin123</code>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setFormData({ email: 'admin@cleopatra.com', password: 'admin123' });
+            }}
+            className="mt-3 w-full py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
+            style={{ backgroundColor: colors.primary }}
+          >
+            ⚙️ Usar Credenciales de Prueba
+          </button>
         </div>
 
         <div className="mt-6 text-center">

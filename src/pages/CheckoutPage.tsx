@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, MapPin, Phone, Mail, User, MessageCircle } from 'lucide-react';
@@ -14,6 +14,7 @@ const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { cart, getCartTotal, clearCart, addToast } = useStore();
+  const [isLoading, setIsLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [shippingData, setShippingData] = useState({
@@ -134,6 +135,25 @@ const CheckoutPage: React.FC = () => {
     'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima',
     'Valle del Cauca', 'Vaupés', 'Vichada'
   ];
+
+  // Dar tiempo para que el carrito se cargue desde el store
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <SimpleNavbar />
+        <div className="flex items-center justify-center p-4 min-h-[calc(100vh-4rem)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (

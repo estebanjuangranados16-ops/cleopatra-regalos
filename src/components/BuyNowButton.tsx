@@ -19,14 +19,13 @@ const BuyNowButton: React.FC<BuyNowButtonProps> = ({
 }) => {
   const navigate = useNavigate();
   const { colors } = useTheme();
-  const { addToCart, clearCart } = useStore();
+  const { buyNow } = useStore();
 
   const handleBuyNow = () => {
-    // Limpiar carrito y agregar solo este producto
-    clearCart();
-    addToCart(product);
+    // Usar el método buyNow que limpia el carrito y agrega el producto de forma síncrona
+    buyNow(product);
     
-    // Ir directamente al checkout
+    // Navegar inmediatamente al checkout
     navigate('/checkout');
   };
 

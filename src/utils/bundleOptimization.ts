@@ -1,14 +1,8 @@
-// Bundle optimization utilities - simplified
+// Bundle optimization utilities - minimal
 export const preloadCriticalChunks = () => {
-  // Simple preload for critical resources
-  if (typeof window !== 'undefined') {
-    console.log('Preloading critical chunks');
-  }
+  // Disabled to avoid preload warnings
 };
 
 export const deferNonCriticalJS = () => {
-  // Simple defer for non-critical JS
-  if (typeof window !== 'undefined') {
-    console.log('Deferring non-critical JS');
-  }
+  // Disabled to avoid preload warnings
 };

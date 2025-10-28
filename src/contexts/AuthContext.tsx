@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, name: string) => Promise<boolean>;
+  loginWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -78,6 +79,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      // Mock Google login for demo
+      const mockUser: UserProfile = {
+        id: 'google-user-' + Date.now(),
+        uid: 'google-user-' + Date.now(),
+        email: 'usuario@gmail.com',
+        name: 'Usuario Google',
+        displayName: 'Usuario Google',
+        role: 'customer',
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      };
+      setUser(mockUser);
+      return true;
+    } catch (error) {
+      console.error('Google login error:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       await authService.signOut();
@@ -95,6 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     login,
     register,
+    loginWithGoogle,
     logout,
     isAdmin: user?.role === 'admin'
   };

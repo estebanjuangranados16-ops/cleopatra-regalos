@@ -125,11 +125,7 @@ Usa las clases de Tailwind:
 - Mejoras de accesibilidad
 - Refactorización de código
 
-## 📞 Contacto
 
-- **Issues**: Usa GitHub Issues para reportar bugs
-- **Discusiones**: GitHub Discussions para ideas
-- **Email**: dev@cleopatraregalos.com
 
 ## 🏆 Reconocimientos
 
